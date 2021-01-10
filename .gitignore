@@ -85,3 +85,10 @@ lint/generated/
 lint/outputs/
 lint/tmp/
 # lint/reports/
+
+#IDE stuff
+.settings/
+.project
+
+#environment
+TeamCode/env
