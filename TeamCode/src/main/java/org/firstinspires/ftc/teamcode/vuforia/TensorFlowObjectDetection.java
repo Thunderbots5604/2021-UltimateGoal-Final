@@ -27,7 +27,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.firstinspires.ftc.robotcontroller.external.samples;
+package org.firstinspires.ftc.teamcode.vuforia;
 
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -56,7 +56,7 @@ import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
 public class ConceptTensorFlowObjectDetection extends LinearOpMode {
     private static Properties env = new Properties();
     try {
-        FileInputStream inConfig = new FileInputStream("../../env");
+        FileInputStream inConfig = new FileInputStream("../../../env");
         env.load(inConfig);
         inConfig.close();
     } catch (IOException ex) {
