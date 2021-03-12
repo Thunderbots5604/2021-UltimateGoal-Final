@@ -92,3 +92,4 @@ lint/tmp/
 
 #environment
 TeamCode/env
+TeamCode/env.properties

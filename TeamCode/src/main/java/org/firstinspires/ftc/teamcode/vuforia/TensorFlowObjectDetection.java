@@ -56,7 +56,7 @@ import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
 public class ConceptTensorFlowObjectDetection extends LinearOpMode {
     private static Properties env = new Properties();
     try {
-        FileInputStream inConfig = new FileInputStream("../../../env");
+        FileInputStream inConfig = new FileInputStream("../../../env.properties");
         env.load(inConfig);
         inConfig.close();
     } catch (IOException ex) {
