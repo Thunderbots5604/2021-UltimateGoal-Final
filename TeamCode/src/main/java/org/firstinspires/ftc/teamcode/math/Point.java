@@ -1,4 +1,7 @@
-/*This class is used as a way to make points*/
+/*This class is used as a way to make points
+* and vectors centered at the origin. If you want a vector,
+* you should be able to do almost everything you'd need
+* with that using this point class*/
 
 package org.firstinspires.ftc.teamcode.math;
 
@@ -23,6 +26,11 @@ public class Point implements Cloneable{
         this(0,0);
     }
 
+    //draw a line from the origin to this point
+    public Line lineFromOrigin() {
+        return new Line(new Point(), this);
+    }
+
     //clone method
     @Override
     public Point clone() {
@@ -32,7 +40,7 @@ public class Point implements Cloneable{
 
     //return angle from the positive x (arctan)
     public double angle() {
-        return atan2(y, x);
+        return Math.atan2(y, x);
     }
 
     //return distance from origin
@@ -40,23 +48,27 @@ public class Point implements Cloneable{
         return Math.sqrt(x*x + y*y);
     }
 
-    //add two points
+    //add two points --- also works to translate them by some amount
     public Point plus(Point otherPoint) {
         //add each of the coordinates
         return new Point(this.getX() + otherPoint.getX(),
                 this.getY() + otherPoint.getY());
     }
 
+    //get the same point, but with negative values instead
+    public Point negative() {
+        return new Point(-1 * this.getX(), -1 * this.getY());
+    }
+
     //subtract two points
     public Point minus(Point otherPoint) {
-        return new Point(this.getX() - otherPoint.getX(),
-                this.getY() - otherPoint.getY());
+        return this.plus(this.negative());
     }
 
     //check for equality with another point
     public boolean equals(Point otherPoint) {
         //check each value individually
-        if (MathUtilites.closeEnough(this.getX(), otherPoint.getX())
+        if (MathUtilities.closeEnough(this.getX(), otherPoint.getX())
                 && MathUtilities.closeEnough(this.getY(), otherPoint.getY())) {
             return true;
         }
@@ -67,8 +79,8 @@ public class Point implements Cloneable{
     }
 
     //scalar multiplication
-    public Point scale(double scalefactor) {
-        this.setX(scaleFactor * this.getX());
+    public Point scale(double scaleFactor) {
+        return new Point(scaleFactor * this.getX(), scaleFactor * this.getY());
     }
 
     public double getX() {
