@@ -16,8 +16,6 @@ public class Move extends LinearOpMode {
     public DcMotor rightMotorBack = null;
     public Gyro gyro = new Gyro();
 
-    private final int RATIO = 1;
-
     @Override
     public void runOpMode() {}
     public void initialize() {

@@ -19,14 +19,6 @@ public class Gyro extends LinearOpMode {
     public BNO055IMU imu;
     public Orientation angles;
     public double heading = 0;
-    public double angle = 0;
-    public double degrees = 0;
-    public int side = 0;
-    public double targetAngle;
-    public double currentAngle;
-    public double initialAngle;
-    public double angleDifference;
-    public String turnTowards;
 
     public ElapsedTime runtime = new ElapsedTime();
 
