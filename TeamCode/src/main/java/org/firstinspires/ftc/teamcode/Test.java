@@ -2,30 +2,23 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import org.firstinspires.ftc.robotcore.external.hardware.camera.Camera;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import java.util.List;
-import java.util.Properties;
-import java.io.FileInputStream;
-import org.firstinspires.ftc.robotcore.external.ClassFactory;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer.CameraDirection;
-import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector;
-import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
+import com.qualcomm.robotcore.hardware.DcMotor;
 
 @Autonomous(name = "Test :(", group = "")
 public class Test extends LinearOpMode {
 
     public Cam vuforia = new Cam();
+    public Move move = new Move();
 
     @Override
     public void runOpMode() {
 
         waitForStart();
-        int zone = vuforia.getZone();
-        telemetry.addData("Zone: ", zone);
-        telemetry.update();
+        move.move(1000, .5, "forward");
+        move.move(1000, .5, "backward");
+        move.move(10000, .5, "turn left");
         sleep(10000);
+        move.move(10000000, .3, "forward");
     }
 }

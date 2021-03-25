@@ -1,7 +1,7 @@
 /*This class is used as a way to make points*/
 
 package org.firstinspires.ftc.teamcode.math;
-
+import java.math.*;
 
 
 public class Point implements Cloneable{
@@ -32,7 +32,7 @@ public class Point implements Cloneable{
 
     //return angle from the positive x (arctan)
     public double angle() {
-        return atan2(y, x);
+        return Math.atan2(y, x);
     }
 
     //return distance from origin
@@ -56,7 +56,7 @@ public class Point implements Cloneable{
     //check for equality with another point
     public boolean equals(Point otherPoint) {
         //check each value individually
-        if (MathUtilites.closeEnough(this.getX(), otherPoint.getX())
+        if (MathUtilities.closeEnough(this.getX(), otherPoint.getX())
                 && MathUtilities.closeEnough(this.getY(), otherPoint.getY())) {
             return true;
         }
@@ -67,7 +67,7 @@ public class Point implements Cloneable{
     }
 
     //scalar multiplication
-    public Point scale(double scalefactor) {
+    public void scale(double scaleFactor) {
         this.setX(scaleFactor * this.getX());
     }
 
