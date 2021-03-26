@@ -1,13 +1,13 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
 @Autonomous(name = "Move", group = "")
-@Disabled
 public class Move extends LinearOpMode {
 
     public DcMotor leftMotorFront = null;
@@ -17,10 +17,12 @@ public class Move extends LinearOpMode {
     public Gyro gyro = new Gyro();
 
     private final int RATIO = 1;
+    private final double TICKS_PER_DEGREE = 6.9;
 
     @Override
     public void runOpMode() {}
-    public void initialize() {
+    public void initialize(HardwareMap hardwareMap) {
+
         leftMotorFront = hardwareMap.get(DcMotor.class, "lmf");
         leftMotorBack = hardwareMap.get(DcMotor.class, "lmb");
         rightMotorFront = hardwareMap.get(DcMotor.class, "rmf");
@@ -34,7 +36,9 @@ public class Move extends LinearOpMode {
         rightMotorFront.setDirection(DcMotorSimple.Direction.REVERSE);
         rightMotorBack.setDirection(DcMotorSimple.Direction.REVERSE);
 
-        gyro.initGyro();
+
+
+        gyro.initGyro(hardwareMap);
     }
     public void move(int distance, double power, String direction) {
         switch (direction) {
@@ -64,14 +68,14 @@ public class Move extends LinearOpMode {
     }
 
     public void turnTo(double finalAngle, double power) {
-        double turnAmount = gyro.getAngleDifference(gyro.getAngle(), finalAngle);
+        double turnAmount = gyro.getAngleDifference(gyro.getAngle(), finalAngle) * TICKS_PER_DEGREE;
         boolean turnTowards = gyro.closerSide(gyro.getAngle(), finalAngle);
 
-        if (turnTowards) {
-            move((int) turnAmount, power, "turn right");
+        if (!turnTowards) {
+            move((int) turnAmount, power, "turn left");
         }
         else {
-            move((int) turnAmount, power, "turn left");
+            move((int) turnAmount, power, "turn right");
         }
     }
 
@@ -88,7 +92,7 @@ public class Move extends LinearOpMode {
 
         double initialAngle = gyro.getAngle();
 
-        double angleAdjuster;
+        double angleAdjuster = 0;
         double multiplier = 1;
         while((lfTicks < lfTarget) || (lbTicks < lbTarget) || (rfTicks < rfTarget) || (rbTicks < rbTarget)) {
             lfTicks = leftMotorFront.getCurrentPosition();
@@ -96,7 +100,7 @@ public class Move extends LinearOpMode {
             rfTicks = rightMotorFront.getCurrentPosition();
             rbTicks = rightMotorBack.getCurrentPosition();
 
-            angleAdjuster = gyro.angleAdjust(initialAngle) * power;
+            angleAdjuster = gyro.angleAdjust(initialAngle) * power * 0;
             multiplier = 1 - .2 * ((lfTicks/lfTarget + lbTicks/lbTarget + rfTicks / rfTarget + rbTicks / rbTarget) / 4);
 
             leftMotorFront.setPower((power + angleAdjuster) * multiplier);
@@ -146,33 +150,33 @@ public class Move extends LinearOpMode {
         rightMotorBack.setPower(0);
     }
     public void turnLeft(int target, double power) {
-            int lfTicks = leftMotorFront.getCurrentPosition();
-            int lbTicks = leftMotorBack.getCurrentPosition();
-            int rfTicks = rightMotorFront.getCurrentPosition();
-            int rbTicks = rightMotorBack.getCurrentPosition();
+        int lfTicks = leftMotorFront.getCurrentPosition();
+        int lbTicks = leftMotorBack.getCurrentPosition();
+        int rfTicks = rightMotorFront.getCurrentPosition();
+        int rbTicks = rightMotorBack.getCurrentPosition();
 
-            int lfTarget = lfTicks - target;
-            int lbTarget = lbTicks - target;
-            int rfTarget = rfTicks + target;
-            int rbTarget = rbTicks + target;
+        int lfTarget = lfTicks - target;
+        int lbTarget = lbTicks - target;
+        int rfTarget = rfTicks + target;
+        int rbTarget = rbTicks + target;
 
-            double angleAdjuster;
-            double multiplier = 1;
-            while((lfTicks > lfTarget) || (lbTicks > lbTarget) || (rfTicks < rfTarget) || (rbTicks < rbTarget)) {
-                lfTicks = leftMotorFront.getCurrentPosition();
-                lbTicks = leftMotorBack.getCurrentPosition();
-                rfTicks = rightMotorFront.getCurrentPosition();
-                rbTicks = rightMotorBack.getCurrentPosition();
+        double angleAdjuster;
+        double multiplier = 1;
+        while((lfTicks > lfTarget) || (lbTicks > lbTarget) || (rfTicks < rfTarget) || (rbTicks < rbTarget)) {
+            lfTicks = leftMotorFront.getCurrentPosition();
+            lbTicks = leftMotorBack.getCurrentPosition();
+            rfTicks = rightMotorFront.getCurrentPosition();
+            rbTicks = rightMotorBack.getCurrentPosition();
 
-                leftMotorFront.setPower(-power * multiplier);
-                leftMotorBack.setPower(-power * multiplier);
-                rightMotorFront.setPower(power * multiplier);
-                rightMotorBack.setPower(power * multiplier);
-            }
-            leftMotorFront.setPower(0);
-            leftMotorBack.setPower(0);
-            rightMotorFront.setPower(0);
-            rightMotorBack.setPower(0);
+            leftMotorFront.setPower(-power * multiplier);
+            leftMotorBack.setPower(-power * multiplier);
+            rightMotorFront.setPower(power * multiplier);
+            rightMotorBack.setPower(power * multiplier);
+        }
+        leftMotorFront.setPower(0);
+        leftMotorBack.setPower(0);
+        rightMotorFront.setPower(0);
+        rightMotorBack.setPower(0);
     }
     public void turnRight(int target, double power) {
         int lfTicks = leftMotorFront.getCurrentPosition();
@@ -180,10 +184,10 @@ public class Move extends LinearOpMode {
         int rfTicks = rightMotorFront.getCurrentPosition();
         int rbTicks = rightMotorBack.getCurrentPosition();
 
-        int lfTarget = lfTicks + target;
-        int lbTarget = lbTicks + target;
-        int rfTarget = rfTicks - target;
-        int rbTarget = rbTicks - target;
+        int lfTarget = lfTicks + (int) ((double) target * .91);
+        int lbTarget = lbTicks + (int) ((double) target * .91);
+        int rfTarget = rfTicks - (int) ((double) target * .91);
+        int rbTarget = rbTicks - (int) ((double) target * .91);
 
         double angleAdjuster;
         double multiplier = 1;
