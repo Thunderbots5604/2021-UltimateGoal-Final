@@ -6,15 +6,14 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
-@Autonomous(name="Park", group="")
-public class Park extends LinearOpMode {
+@Autonomous(name="Test", group="")
+public class Test extends LinearOpMode {
 
-    Move move = new Move();
-
+    Cam cam = new Cam(telemetry);
     @Override
-    public void runOpMode() throws InterruptedException {
-        move.initialize(hardwareMap, telemetry);
+    public void runOpMode() {
+        cam.startCam();
         waitForStart();
-        move.move(900, 0.5, "forward");
+        cam.tfod();
     }
 }

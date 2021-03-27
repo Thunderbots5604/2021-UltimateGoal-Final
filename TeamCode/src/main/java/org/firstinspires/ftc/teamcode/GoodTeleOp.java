@@ -2,6 +2,7 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.Servo;
@@ -17,12 +18,15 @@ public class GoodTeleOp extends OpMode {
     DcMotor frMotor = null;
     DcMotor blMotor = null;
     DcMotor brMotor = null;
+    DcMotorEx flyWheel = null;
+
     Servo RingServo = null;
     Servo ClawServo = null;
     Servo ArmServo = null;
 
-    double multiplier = 0.5;
 
+    double multiplier = 0.5;
+    int fwVelocity = -2000;
     @Override
     public void init() {
 
@@ -32,10 +36,12 @@ public class GoodTeleOp extends OpMode {
         frMotor = hardwareMap.get(DcMotor.class, "rmf" );
         blMotor = hardwareMap.get(DcMotor.class, "lmb" );
         brMotor = hardwareMap.get(DcMotor.class, "rmb" );
+        flyWheel = hardwareMap.get(DcMotorEx.class,"flyWheel");
 
         flMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         blMotor.setDirection(DcMotorSimple.Direction.REVERSE);
 
+        flyWheel.setMode(DcMotorEx.RunMode.RUN_USING_ENCODERS);
 
         gamepad1.setJoystickDeadzone(0.1f);
 
@@ -70,6 +76,16 @@ public class GoodTeleOp extends OpMode {
             brMotor.setPower(-gamepad1.right_stick_x * multiplier);
         }
 
+        if(gamepad1.a){
+            RingServo.setPosition(1);
+
+        }
+
+        else{
+            RingServo.setPosition(0);
+        }
+
+        flyWheel.setPower(fwVelocity);
     }
     public void stop() {
         flMotor.setPower(0);

@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 import java.util.Objects;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -20,6 +21,7 @@ import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector;
 import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
 
 @Autonomous(name = "Cam", group = "TensorFlow")
+@Disabled
 public class Cam extends LinearOpMode {
     private static final String TFOD_MODEL_ASSET = "UltimateGoal.tflite";
     private static final String LABEL_FIRST_ELEMENT = "Quad";
@@ -37,13 +39,14 @@ public class Cam extends LinearOpMode {
 
     private List<VuforiaTrackable> allTrackables = new ArrayList<VuforiaTrackable>();
 
+    private Telemetry telemetry;
+
+    public Cam(Telemetry telemetry) {
+        this.telemetry = telemetry;
+    }
+
     @Override
     public void runOpMode() {
-        int zone = 1;
-        waitForStart();
-        initVuforia();
-        initTfod();
-        sleep(3000);
     }
 
     /**
@@ -85,21 +88,15 @@ public class Cam extends LinearOpMode {
     public int tfod() {
 
         int ringCount = 0;
-        //Initialize camera
-        initVuforia();
-        initTfod();
-        if (tfod != null) {
-            tfod.activate();
-        }
         runTime.reset();
         int i = 0;
-        while(opModeIsActive() && runTime.milliseconds() < 3000 && ringCount < 4) {
+        while(/*opModeIsActive() && runTime.milliseconds() < 3000 && */ringCount < 4) {
             List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
             i = 0;
             ringCount = 0;
             for (Recognition recognition : updatedRecognitions) {
-                //telemetry.addData("label: ", recognition.getLabel());
-                //telemetry.update();
+                telemetry.addData("label: ", recognition.getLabel());
+                telemetry.update();
                 sleep(2000);
                 if (recognition.getLabel() == "ring") {
                     ringCount++;
@@ -107,9 +104,9 @@ public class Cam extends LinearOpMode {
                 i++;
             }
         }
-        sleep(2000);
         telemetry.addData("Objects Detected: ", i);
         telemetry.update();
+        sleep(2000);
         return ringCount;
     }
     public double[] getCoords() {
@@ -122,5 +119,12 @@ public class Cam extends LinearOpMode {
     }
     public int getZone() {
         return tfod();
+    }
+    public void startCam() {
+        initVuforia();
+        initTfod();
+        if (tfod != null) {
+            tfod.activate();
+        }
     }
 }

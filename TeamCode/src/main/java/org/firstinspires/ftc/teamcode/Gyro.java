@@ -84,7 +84,7 @@ public class Gyro extends LinearOpMode {
             }
         }
         else {
-            if (currentAngle - targetAngle < 180) {
+            if (currentAngle - targetAngle > 180) {
                 //Left
                 return false;
             }
