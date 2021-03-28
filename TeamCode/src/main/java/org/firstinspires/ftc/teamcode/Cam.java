@@ -85,26 +85,23 @@ public class Cam extends LinearOpMode {
         tfod = ClassFactory.getInstance().createTFObjectDetector(tfodParameters, vuforia);
         tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABEL_FIRST_ELEMENT, LABEL_SECOND_ELEMENT);
     }
-    public int tfod() {
+    public String tfod() {
 
-        int ringCount = 0;
+        String ringCount = "";
+        List<Recognition> updatedRecognitions;
+
         runTime.reset();
-        int i = 0;
-        while(/*opModeIsActive() && runTime.milliseconds() < 3000 && */ringCount < 4) {
-            List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
-            i = 0;
-            ringCount = 0;
-            for (Recognition recognition : updatedRecognitions) {
-                telemetry.addData("label: ", recognition.getLabel());
-                telemetry.update();
-                sleep(2000);
-                if (recognition.getLabel() == "ring") {
-                    ringCount++;
+        while(runTime.milliseconds() < 3000 || opModeIsActive()) {
+            telemetry.addData("Scanning", " for objects");
+            telemetry.update();
+            updatedRecognitions = tfod.getUpdatedRecognitions();
+            if (updatedRecognitions != null) {
+                for (Recognition recognition : updatedRecognitions) {
+                    ringCount = recognition.getLabel();
                 }
-                i++;
             }
         }
-        telemetry.addData("Objects Detected: ", i);
+        telemetry.addData("Rings detected: ", ringCount);
         telemetry.update();
         sleep(2000);
         return ringCount;
@@ -118,7 +115,15 @@ public class Cam extends LinearOpMode {
         }
     }
     public int getZone() {
-        return tfod();
+        String ringCount = tfod();
+        switch (ringCount.toLowerCase()) {
+            case "single":
+                return 1;
+            case "quad":
+                return 2;
+            default:
+                return 0;
+        }
     }
     public void startCam() {
         initVuforia();
@@ -126,5 +131,8 @@ public class Cam extends LinearOpMode {
         if (tfod != null) {
             tfod.activate();
         }
+    }
+    public void endCam() {
+        tfod.shutdown();
     }
 }

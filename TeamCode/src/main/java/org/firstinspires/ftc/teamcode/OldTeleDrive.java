@@ -111,6 +111,8 @@ public class OldTeleDrive extends LinearOpMode {
                 brMotor.setPower(Math.abs(multiplier) * gamepad1.right_stick_x * .7);
                 telemetry.addData("Right stick", gamepad1.right_stick_x);
             }
+
+
             //Don't move if no joysticks moved
             else {
                 flMotor.setPower(0);

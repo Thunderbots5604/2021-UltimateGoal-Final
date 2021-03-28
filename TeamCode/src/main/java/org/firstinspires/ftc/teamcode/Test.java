@@ -14,6 +14,13 @@ public class Test extends LinearOpMode {
     public void runOpMode() {
         cam.startCam();
         waitForStart();
-        cam.tfod();
+        telemetry.addData("Starting ", "Detection");
+        telemetry.update();
+        sleep(2000);
+        int zone = cam.getZone();
+        cam.endCam();
+        telemetry.addData("Zone: ", zone);
+        telemetry.update();
+        sleep(5000);
     }
 }

@@ -49,8 +49,8 @@ public class Move extends LinearOpMode {
         rightMotorFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rightMotorBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        rightMotorFront.setDirection(DcMotorSimple.Direction.REVERSE);
-        rightMotorBack.setDirection(DcMotorSimple.Direction.REVERSE);
+        leftMotorFront.setDirection(DcMotorSimple.Direction.REVERSE);
+        leftMotorBack.setDirection(DcMotorSimple.Direction.REVERSE);
 
         gyro.initGyro(hardwareMap);
 
@@ -224,6 +224,7 @@ public class Move extends LinearOpMode {
 
         }
     }
+    //lf, lb, rf, rb are multipliers for target distance
     public void setTargets(int target, double lf, double lb, double rf, double rb) {
         lfTarget = lfTicks + (int) (lf * target) + 1;
         lbTarget = lbTicks + (int) (lb * target) + 1;
