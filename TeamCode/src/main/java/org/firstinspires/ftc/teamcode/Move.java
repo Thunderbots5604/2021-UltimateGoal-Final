@@ -22,6 +22,7 @@ public class Move extends LinearOpMode {
     private final double TICKS_PER_DEGREE = 6.9;
 
     private Telemetry telemetry;
+    private HardwareMap hardwareMap;
 
     private int lfTarget;
     private int lbTarget;
@@ -33,11 +34,14 @@ public class Move extends LinearOpMode {
     private int rfTicks;
     private int rbTicks;
 
+    public Move(HardwareMap hardwareMap, Telemetry telemetry) {
+        this.hardwareMap = hardwareMap;
+        this.telemetry = telemetry;
+    }
+
     @Override
     public void runOpMode() {}
-    public void initialize(HardwareMap hardwareMap, Telemetry telemetry) {
-
-        this.telemetry = telemetry;
+    public void initialize() {
 
         leftMotorFront = hardwareMap.get(DcMotor.class, "lmf");
         leftMotorBack = hardwareMap.get(DcMotor.class, "lmb");
@@ -58,7 +62,7 @@ public class Move extends LinearOpMode {
         telemetry.update();
     }
     public void move(int distance, double power, String direction) {
-        switch (direction) {
+        switch (direction.toLowerCase()) {
             case "forward":
                 moveForward(distance, power);
                 break;
@@ -66,10 +70,10 @@ public class Move extends LinearOpMode {
                 moveBackward(distance, power);
                 break;
             case "turn left":
-                turnLeft(distance, power);
+                turnLeft((int) (distance * TICKS_PER_DEGREE), power);
                 break;
             case "turn right":
-                turnRight(distance, power);
+                turnRight((int) (distance * TICKS_PER_DEGREE), power);
                 break;
             case "strafe left":
                 strafeLeft(distance, power);

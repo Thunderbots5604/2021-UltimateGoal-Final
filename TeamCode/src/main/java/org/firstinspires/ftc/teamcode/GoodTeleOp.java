@@ -21,36 +21,6 @@ public class GoodTeleOp extends OpMode {
     private DcMotor LiftL = null;
     private DcMotor LiftR = null;
 
-
-    private int directionMecanum;
-    private int directionTurn;
-    private boolean halfSpeed;
-    private boolean reverse;
-    private double maneuverMultiplier;
-    private double angle;
-
-    // mecanumPowers is [FRBL, FLBR]
-    private double[] mecanumPowers;
-    // turnDrivePowers is [FLBL, FRBR]
-    private double[] turnDrivePowers;
-    // driveMultipliers is [mecanum, turn]
-    private double[] driveMultipliers;
-    // motorPowers is [FL, FR, BL, BR]
-    private double[] motorPowers;
-
-    private boolean xButtonPrevious;
-    private boolean yButtonPrevious;
-    private boolean rightStickButtonPrevious;
-    private double p1LeftStickXPrevious;
-    private double p1LeftStickYPrevious;
-    private double p1RightStickXPrevious;
-    private boolean xButtonCurrent;
-    private boolean yButtonCurrent;
-    private boolean rightStickButtonCurrent;
-    private double p1LeftStickXCurrent;
-    private double p1LeftStickYCurrent;
-    private double p1RightStickXCurrent;
-
     private Servo WobbleLocker;
     private Servo WobbleArm;
     private Servo RingArm;
@@ -58,6 +28,10 @@ public class GoodTeleOp extends OpMode {
     private double powerFRBL = 0;
     private double powerFLBR = 0;
     private double multiplier = 1;
+
+    private boolean engageArm = false;
+    private boolean engageLock = false;
+    private boolean swap = false;
 
     @Override
     public void init() {
@@ -70,31 +44,9 @@ public class GoodTeleOp extends OpMode {
         LiftL = hardwareMap.get(DcMotor.class, "LiftMechL");
         LiftR = hardwareMap.get(DcMotor.class, "LiftMechR");
 
-        WobbleLocker = hardwareMap.get(Servo.class, "WobbleGoalLocker" );
+        WobbleLocker = hardwareMap.get(Servo.class, "WobbleLocker" );
         RingArm = hardwareMap.get(Servo.class, "RingGrabber");
-        WobbleArm = hardwareMap.get(Servo.class, "WobbleGoalArm");
-
-        this.halfSpeed = false;
-        this.reverse = false;
-        this.mecanumPowers = new double[2];
-        this.turnDrivePowers = new double[2];
-        this.driveMultipliers = new double[2];
-        this.motorPowers = new double[4];
-        this.maneuverMultiplier = 1;
-        this.directionMecanum = 0;
-        this.directionTurn = 0;
-        xButtonPrevious = false;
-        yButtonPrevious = false;
-        rightStickButtonPrevious = false;
-        p1LeftStickXPrevious = 0;
-        p1LeftStickYPrevious = 0;
-        p1RightStickXPrevious = 0;
-        xButtonCurrent = gamepad1.x || gamepad2.x;
-        yButtonCurrent = gamepad1.y || gamepad2.y;
-        p1LeftStickXCurrent = gamepad1.left_stick_x;
-        p1LeftStickYCurrent = gamepad1.left_stick_y;
-        p1RightStickXCurrent = gamepad1.right_stick_x;
-        rightStickButtonCurrent = gamepad1.right_stick_button || gamepad2.right_stick_button;
+        WobbleArm = hardwareMap.get(Servo.class, "WobbleArm");
 
         //Reverse Motor Directions to Drive Straight
         flMotor.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -106,14 +58,10 @@ public class GoodTeleOp extends OpMode {
 
         telemetry.addData("Status", "Initialized");
         telemetry.update();
-
     }
 
     @Override
     public void loop() {
-        telemetry.addData("Status", "Running");
-        telemetry.update();
-
         if (gamepad1.left_stick_y != 0 || gamepad1.left_stick_x != 0) {
             //FR BL pair
             powerFRBL = (gamepad1.left_stick_x + gamepad1.left_stick_y) / Math.sqrt(2);
@@ -139,33 +87,10 @@ public class GoodTeleOp extends OpMode {
             brMotor.setPower(0);
         }
 
-
-
-
-        if(gamepad1.b) {
-            flMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            frMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            blMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            brMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            flMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            frMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            blMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            brMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        }
-
-        telemetry.addData("Front Right Motor = ", frMotor.getCurrentPosition());
-        telemetry.addData("Front Left Motor = ", flMotor.getCurrentPosition());
-        telemetry.addData("Front Left Motor = ", brMotor.getCurrentPosition());
-        telemetry.addData("Front Left Motor = ", frMotor.getCurrentPosition());
-        telemetry.update();
-
-
-
         if(gamepad1.y){
             LiftL.setPower(0.5);
             LiftR.setPower(0.5);
         }
-
         else if(gamepad1.x){
             LiftL.setPower(-0.5);
             LiftR.setPower(-0.5);
@@ -175,13 +100,53 @@ public class GoodTeleOp extends OpMode {
             LiftR.setPower(0);
         }
 
+        if (gamepad1.right_bumper && gamepad1.b) {
+            if (engageLock) {
+                WobbleLocker.setPosition(0.6);
+                engageLock = false;
+            } else {
+                WobbleLocker.setPosition(0.5);
+                engageLock = true;
+            }
+        }
 
+        if (gamepad1.b) {
+            if (engageArm) {
+                WobbleArm.setPosition(0.6);
+                engageArm = false;
+            } else {
+                WobbleArm.setPosition(0.5);
+                engageArm = true;
+            }
+        }
 
+        if (gamepad1.back) {
+            if (swap) {
+                swap = false;
+            } else {
+                swap = true;
+            }
+        }
 
+        if(gamepad2.b) {
+            flMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            frMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            blMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            brMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            flMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            frMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            blMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            brMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        }
+
+        telemetry.addData("Swap mode: ", Boolean.toString(swap));
+
+        telemetry.addData("Front Right Motor = ", frMotor.getCurrentPosition());
+        telemetry.addData("Front Left Motor = ", flMotor.getCurrentPosition());
+        telemetry.addData("Front Left Motor = ", brMotor.getCurrentPosition());
+        telemetry.addData("Front Left Motor = ", frMotor.getCurrentPosition());
+        telemetry.update();
     }
-
-
-
 
     public void stop() {
         //Turn Off Motors

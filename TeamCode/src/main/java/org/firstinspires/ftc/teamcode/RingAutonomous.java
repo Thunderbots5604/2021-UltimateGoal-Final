@@ -6,8 +6,8 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
-@Autonomous(name="Wobble + Park", group="Competition")
-public class WobbleAndPark extends LinearOpMode {
+@Autonomous(name="Ring", group="Competition")
+public class RingAutonomous extends LinearOpMode {
 
     Move move = new Move(hardwareMap, telemetry);
     Cam cam = new Cam(telemetry);
@@ -40,8 +40,24 @@ public class WobbleAndPark extends LinearOpMode {
         //Readjust to face forward
         move.move(0, .5, "gyro turn");
 
-        //Park
+        //Readjust to same spot
+        move.move(tileLength * (-Math.abs(zone - 1) + 1), .5, "strafe left");
         move.move(tileLength, .4, "strafe left");
         move.move(tileLength * zone, .5, "backward");
+
+        move.move(tileLength / 2, 0.8, "backwards");
+        move.move(tileLength, 0.8, "strafe right");
+        move.move(20, .4, "turn right");
+        move.move(25, .5, "gyro turn");
+
+        //Turn and shoot rings at power shots
+        motors.fireRing();
+        move.move(27, .5, "gyro turn");
+        motors.fireRing();
+        move.move(30, .5, "gyro turn");
+        motors.fireRing();
+        //Move back to line
+        move.move(tileLength / 2, 0.8, "forward");
+
     }
 }
