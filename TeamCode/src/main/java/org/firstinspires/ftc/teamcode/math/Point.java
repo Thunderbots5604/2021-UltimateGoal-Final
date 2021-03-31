@@ -69,6 +69,15 @@ public class Point implements Cloneable{
     //scalar multiplication
     public void scale(double scaleFactor) {
         this.setX(scaleFactor * this.getX());
+        this.setY(scaleFactor * this.getY());
+    }
+
+    //return a unit vector
+    public Point getUnitVector() {
+        Point unitVector = this.clone();
+        //scale doesn't return the point, so this needs to be done separate form return statement
+        unitVector.scale(1 / unitVector.distance());
+        return unitVector();
     }
 
     public double getX() {
