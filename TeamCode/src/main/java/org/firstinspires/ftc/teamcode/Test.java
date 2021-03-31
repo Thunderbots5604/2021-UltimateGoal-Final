@@ -10,17 +10,16 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 public class Test extends LinearOpMode {
 
     Cam cam = new Cam(telemetry);
+    Move move = new Move(telemetry);
     @Override
     public void runOpMode() {
+        move.initialize(hardwareMap);
         cam.startCam();
-        waitForStart();
-        telemetry.addData("Starting ", "Detection");
-        telemetry.update();
-        sleep(2000);
         int zone = cam.getZone();
         cam.endCam();
-        telemetry.addData("Zone: ", zone);
+
+        telemetry.addData("Rings detected: ", zone);
         telemetry.update();
-        sleep(5000);
+        waitForStart();
     }
 }
