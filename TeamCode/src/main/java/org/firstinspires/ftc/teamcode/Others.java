@@ -2,11 +2,14 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.hardware.DcMotorSimple.Direction;
+import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.util.Hardware;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -41,13 +44,13 @@ public class Others extends LinearOpMode {
     public void runOpMode() {}
     public void initMotors(HardwareMap hardwareMap) {
 
-        //Still need to reverse one of them
         LiftL = hardwareMap.get(DcMotor.class, "LiftMechL");
         LiftR = hardwareMap.get(DcMotor.class, "LiftMechR");
+        LiftR.setDirection(DcMotorSimple.Direction.REVERSE);
 
-        WobbleLocker = hardwareMap.get(Servo.class, "WobbleGoalLocker" );
+        WobbleLocker = hardwareMap.get(Servo.class, "WobbleLocker");
         RingArm = hardwareMap.get(Servo.class, "RingGrabber");
-        WobbleArm = hardwareMap.get(Servo.class, "WobbleGoalArm");
+        WobbleArm = hardwareMap.get(Servo.class, "WobbleArm");
     }
     public void lift() {
 

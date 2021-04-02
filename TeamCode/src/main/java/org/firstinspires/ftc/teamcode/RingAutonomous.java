@@ -16,6 +16,7 @@ public class RingAutonomous extends LinearOpMode {
     //Distance calculators (Easier to change since not using coordinates)
     int halfOfField = Values.halfOfField;
     int tileLength = Values.tileLength;
+    double power = Values.power;
 
     @Override
     public void runOpMode() throws InterruptedException {

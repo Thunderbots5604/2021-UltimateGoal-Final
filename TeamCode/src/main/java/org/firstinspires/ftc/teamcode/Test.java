@@ -11,15 +11,17 @@ public class Test extends LinearOpMode {
 
     Cam cam = new Cam(telemetry);
     Move move = new Move(telemetry);
+
+    int halfOfField = Values.halfOfField;
+    int tileLength = Values.tileLength;
+    double power = Values.power;
+
     @Override
     public void runOpMode() {
         move.initialize(hardwareMap);
-        cam.startCam();
-        int zone = cam.getZone();
-        cam.endCam();
 
-        telemetry.addData("Rings detected: ", zone);
-        telemetry.update();
         waitForStart();
+
+        move.move(halfOfField, power, "forward");
     }
 }

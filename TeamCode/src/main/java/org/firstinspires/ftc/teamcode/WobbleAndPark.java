@@ -16,6 +16,7 @@ public class WobbleAndPark extends LinearOpMode {
     //Distance calculators (Easier to change since not using coordinates)
     int halfOfField = Values.halfOfField;
     int tileLength = Values.tileLength;
+    double power = Values.power;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -25,14 +26,15 @@ public class WobbleAndPark extends LinearOpMode {
         int zone = cam.getZone();
         move.initialize(hardwareMap);
         motors.initMotors(hardwareMap);
-        cam.endCam();
-        telemetry.addData("Rings detected: ", zone);
+        telemetry.addData("Zone: ", zone);
         telemetry.update();
         waitForStart();
+        cam.endCam();
 
         //Go To Zone
         move.startToZone(zone);
 
+        /*
         //Go back to corner
         move.zoneToCorner(zone, true);
 
@@ -41,5 +43,6 @@ public class WobbleAndPark extends LinearOpMode {
 
         //Park
         move.zoneToCorner(zone, false);
+        */
     }
 }
