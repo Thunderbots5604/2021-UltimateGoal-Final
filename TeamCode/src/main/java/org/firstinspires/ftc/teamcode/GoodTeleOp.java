@@ -28,10 +28,24 @@ public class GoodTeleOp extends OpMode {
     private double powerFRBL = 0;
     private double powerFLBR = 0;
     private double multiplier = 1;
+    private double leftTrigger = 0;
+    private double rightTrigger = 0;
 
+    private boolean reverse = false;
+    private boolean ring = false;
+    private boolean pastX = false;
+    private boolean pastY = false;
+    private boolean pastB = false;
+    private boolean pastA = false;
+    private boolean pastLB = false;
     private boolean engageArm = false;
     private boolean engageLock = false;
     private boolean swap = false;
+    private boolean engageRing = false;
+    private boolean halfSpeed = false;
+
+
+
 
     @Override
     public void init() {
@@ -57,7 +71,11 @@ public class GoodTeleOp extends OpMode {
         blMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         liftL.setDirection(DcMotorSimple.Direction.REVERSE);
 
+        liftL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        liftR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
+        liftL.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        liftR.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         //Set Gamepad Deadzone
         gamepad1.setJoystickDeadzone(0.1f);
@@ -68,6 +86,9 @@ public class GoodTeleOp extends OpMode {
 
     @Override
     public void loop() {
+        leftTrigger = gamepad1.left_trigger;
+        rightTrigger = gamepad1.right_trigger;
+
         if (gamepad1.left_stick_y != 0 || gamepad1.left_stick_x != 0) {
             //FR BL pair
             powerFRBL = (gamepad1.left_stick_x + gamepad1.left_stick_y) / Math.sqrt(2);
@@ -93,50 +114,84 @@ public class GoodTeleOp extends OpMode {
             brMotor.setPower(0);
         }
 
-        if(gamepad1.y){
-            liftL.setPower(0.5);
-            liftR.setPower(0.5);
+        if(pastB == true && gamepad2.b == false){
+            reverse = !reverse;
+            multiplier *= -1;
         }
-        else if(gamepad1.x){
-            liftL.setPower(-0.5);
-            liftR.setPower(-0.5);
+
+        pastB = gamepad2.b;
+
+        if(leftTrigger > 0 && liftL.getCurrentPosition() < 10){
+            liftL.setPower(leftTrigger);
+            liftR.setPower(leftTrigger);
+
+        }
+
+        if(gamepad2.left_bumper == false && pastLB == true){
+            halfSpeed = !halfSpeed;
+            if(halfSpeed == true){
+                multiplier *= 0.5;
+
+            }
+            else{
+                multiplier *= 2;
+            }
+        }
+        pastLB = gamepad2.left_bumper;
+        if(rightTrigger > 0){
+            liftL.setPower(-rightTrigger);
+            liftR.setPower(-rightTrigger);
         }
         else{
             liftL.setPower(0);
             liftR.setPower(0);
         }
+        if (gamepad1.left_bumper == true){
+            liftR.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            liftL.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            liftL.setTargetPosition(0);
+            liftR.setTargetPosition(0);
+        }
+        if (gamepad1.right_bumper == true){
+            liftR.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            liftL.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            liftL.setTargetPosition(-240);
+            liftR.setTargetPosition(-240);
+        }
 
-        if (gamepad2.y) {
-            if (engageLock) {
-                WobbleLocker.setDirection(Servo.Direction.FORWARD);
+        if(gamepad1.y && !pastY){
+            engageLock = !engageLock;
+            if(engageLock){
                 WobbleLocker.setPosition(0);
-                engageLock = false;
-            } else {
-                WobbleLocker.setDirection(Servo.Direction.REVERSE);
-                WobbleLocker.setPosition(0.5);
-                engageLock = true;
+
+            }
+            else{
+                WobbleLocker.setPosition(-0.5);
             }
         }
+        pastY = gamepad1.y;
 
-        if (gamepad2.x) {
-            if (engageArm) {
-                WobbleArm.setDirection(Servo.Direction.FORWARD);
+        if(gamepad1.x && !pastX){
+            engageArm = !engageArm;
+            if(engageArm){
                 WobbleArm.setPosition(0);
-                engageArm = false;
-            } else {
-                WobbleArm.setDirection(Servo.Direction.REVERSE);
-                WobbleArm.setPosition(0.5);
-                engageArm = true;
+            }
+            else{
+                WobbleArm.setPosition(-0.5);
             }
         }
+        pastA = gamepad1.a;
+        if(gamepad1.a && !pastA){
+            ring = !ring;
+            if(ring){
+                RingArm.setPosition(0);
+            }
+            else{
+                RingArm.setPosition(-0.5);
+            }
+        }
+        pastA = gamepad1.a;
 
-        if (gamepad1.back) {
-            if (swap) {
-                swap = false;
-            } else {
-                swap = true;
-            }
-        }
 
         if(gamepad2.back) {
             flMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -147,14 +202,21 @@ public class GoodTeleOp extends OpMode {
             frMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             blMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             brMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            liftL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            liftR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
         }
 
         telemetry.addData("Swap mode: ", swap);
-
         telemetry.addData("Front Right Motor = ", frMotor.getCurrentPosition());
         telemetry.addData("Front Left Motor = ", flMotor.getCurrentPosition());
         telemetry.addData("Front Left Motor = ", brMotor.getCurrentPosition());
         telemetry.addData("Front Left Motor = ", frMotor.getCurrentPosition());
+        telemetry.addData("LiftMech = ", liftL.getCurrentPosition());
+        telemetry.addData("Arm Servo = ", WobbleArm.getPosition() );
+        telemetry.addData("Reverse = ", reverse);
+        telemetry.addData("halfSpeed = ", halfSpeed );
+        telemetry.addData("Ring Arm = ", ring );
         telemetry.update();
     }
 

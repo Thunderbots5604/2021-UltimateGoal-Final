@@ -43,6 +43,7 @@ public class Move extends LinearOpMode {
 
     private int halfOfField = Values.halfOfField;
     private int tileLength = Values.tileLength;
+    private double power = Values.power;
 
 
 
@@ -55,46 +56,39 @@ public class Move extends LinearOpMode {
     public void runOpMode() {}
 
     public void startToZone(int zone) {
-
-        move(10, 0.5, "turn left");
-        sleep(100);
-        move(tileLength, 0.5, "forward");
-        sleep(100);
-
         switch (zone) {
             case 0:
-                move(7, 0.5, "turn right");
+                move(325 + tileLength * 2, power, "forward");
                 sleep(100);
-                move(tileLength * 2, 0.6, "forward");
-                sleep(100);
+                move(325 + tileLength * 2, power, "backward");
                 break;
             case 1:
-                move(20, .5, "turn right");
+                move(halfOfField + tileLength * 1, power, "forward");
                 sleep(100);
-                move(halfOfField, 0.6, "forward");
+                move(325, power, "strafe right");
                 sleep(100);
+                move(halfOfField + tileLength * 1, power, "backward");
                 break;
             case 2:
-                move(7, 0.5, "turn right");
+                move(halfOfField + tileLength * 2, power, "forward");
                 sleep(100);
-                move(halfOfField + tileLength * 2, 0.6, "forward");
-                sleep(100);
+                move(halfOfField + tileLength * 2, power, "backward");
+                break;
+            default:
                 break;
         }
-        move(0, 0.5, "gyro turn");
-
     }
     public void zoneToCorner(int zone, boolean corner) {
-        move(tileLength / 2, .4, "backward");
+        move(tileLength / 2, power, "backward");
         move(tileLength / 2, .5, "strafe left");
         if (zone == 1) {
             move(tileLength, .5, "strafe left");
         }
         if (corner) {
-            move(halfOfField + tileLength * zone, .5, "backward");
+            move(halfOfField + tileLength * zone, power, "backward");
         }
         else {
-            move(tileLength * zone, .5, "backward");
+            move(tileLength * zone, power, "backward");
         }
     }
 
@@ -116,7 +110,7 @@ public class Move extends LinearOpMode {
         rightMotorFront = hardwareMap.get(DcMotor.class, "rmf");
         rightMotorBack = hardwareMap.get(DcMotor.class, "rmb");
 
-        WobbleLocker = hardwareMap.get(Servo.class, "WobbleLocker" );
+        WobbleLocker = hardwareMap.get(Servo.class, "WobbleLocker");
         RingArm = hardwareMap.get(Servo.class, "RingGrabber");
         WobbleArm = hardwareMap.get(Servo.class, "WobbleArm");
 
@@ -179,29 +173,43 @@ public class Move extends LinearOpMode {
     }
 
     public void moveForward(int target, double power) {
+        resetEncoders();
         setTicks();
 
         setTargets(target, 1, 1, 1, 1);
 
         double initialAngle = gyro.getAngle();
 
-        double angleAdjuster = 0;
+        double angleAdjuster;
         double multiplier = 1;
-        while(opModeIsActive() && (lfTicks < lfTarget) || (lbTicks < lbTarget) || (rfTicks < rfTarget) || (rbTicks < rbTarget)) {
+        while(((lfTicks < lfTarget) || (lbTicks < lbTarget) || (rfTicks < rfTarget) || (rbTicks < rbTarget))) {
             setTicks();
 
-            angleAdjuster = gyro.angleAdjust(initialAngle) * power * 0;
-            multiplier = 1 - .2 * ((lfTicks/lfTarget + lbTicks/lbTarget + rfTicks / rfTarget + rbTicks / rbTarget) / 4);
+            angleAdjuster = gyro.angleAdjust(initialAngle);
+            multiplier = 1 - .15 * ((double) lfTicks / lfTarget);
+
+            if (angleAdjuster > power / 10) {
+                angleAdjuster = power / 10;
+            }
+            if (gyro.getAngleDifference(gyro.getAngle(), initialAngle) > 40) {
+                move((int) initialAngle, power, "gyro turn");
+            }
 
             leftMotorFront.setPower((power + angleAdjuster) * multiplier);
             leftMotorBack.setPower((power + angleAdjuster) * multiplier);
             rightMotorFront.setPower((power - angleAdjuster) * multiplier);
             rightMotorBack.setPower((power - angleAdjuster) * multiplier);
+
+            telemetry.addData("lfTicks: ", lfTicks);
+            telemetry.addData("lfTarget: ", lfTarget);
+            telemetry.addData("multiplier: ", multiplier);
+            telemetry.update();
         }
 
         stopMotors();
     }
     public void moveBackward(int target, double power) {
+        resetEncoders();
         setTicks();
 
         setTargets(target, -1, -1, -1, -1);
@@ -210,11 +218,18 @@ public class Move extends LinearOpMode {
 
         double angleAdjuster;
         double multiplier = 1;
-        while(opModeIsActive() && (lfTicks > lfTarget) || (lbTicks > lbTarget) || (rfTicks > rfTarget) || (rbTicks > rbTarget)) {
+        while(((lfTicks > lfTarget) || (lbTicks > lbTarget) || (rfTicks > rfTarget) || (rbTicks > rbTarget))) {
             setTicks();
 
             angleAdjuster = gyro.angleAdjust(initialAngle) * power;
-            multiplier = 1 - .2 * ((lfTicks/lfTarget + lbTicks/lbTarget + rfTicks / rfTarget + rbTicks / rbTarget) / 4);
+            multiplier = 1 - .15 * (lfTicks / lfTarget);
+
+            if (angleAdjuster > power / 10) {
+                angleAdjuster = power / 10;
+            }
+            if (gyro.getAngleDifference(gyro.getAngle(), initialAngle) > 40) {
+                move((int) initialAngle, power, "gyro turn");
+            }
 
             leftMotorFront.setPower(-(power + angleAdjuster) * multiplier);
             leftMotorBack.setPower(-(power + angleAdjuster) * multiplier);
@@ -231,7 +246,7 @@ public class Move extends LinearOpMode {
 
         double angleAdjuster;
         double multiplier = 1;
-        while(opModeIsActive() && (lfTicks > lfTarget) || (lbTicks > lbTarget) || (rfTicks < rfTarget) || (rbTicks < rbTarget)) {
+        while(((lfTicks > lfTarget) || (lbTicks > lbTarget) || (rfTicks < rfTarget) || (rbTicks < rbTarget))) {
             setTicks();
 
             leftMotorFront.setPower(-power * multiplier);
@@ -248,7 +263,7 @@ public class Move extends LinearOpMode {
 
         double angleAdjuster;
         double multiplier = 1;
-        while(opModeIsActive() && (lfTicks < lfTarget) || (lbTicks < lbTarget) || (rfTicks > rfTarget) || (rbTicks > rbTarget)) {
+        while(((lfTicks < lfTarget) || (lbTicks < lbTarget) || (rfTicks > rfTarget) || (rbTicks > rbTarget))) {
             setTicks();
 
             leftMotorFront.setPower(power * multiplier);
@@ -265,7 +280,7 @@ public class Move extends LinearOpMode {
 
         double angleAdjuster;
         double multiplier = 1;
-        while(opModeIsActive() && (lfTicks > lfTarget) || (lbTicks < lbTarget) || (rfTicks < rfTarget) || (rbTicks > rbTarget)) {
+        while(((lfTicks > lfTarget) || (lbTicks < lbTarget) || (rfTicks < rfTarget) || (rbTicks > rbTarget))) {
             setTicks();
 
             leftMotorFront.setPower(-power * multiplier);
@@ -282,7 +297,7 @@ public class Move extends LinearOpMode {
 
         double angleAdjuster;
         double multiplier = 1;
-        while(opModeIsActive() && (lfTicks < lfTarget) || (lbTicks > lbTarget) || (rfTicks > rfTarget) || (rbTicks < rbTarget)) {
+        while((lfTicks < lfTarget) || (lbTicks > lbTarget) || (rfTicks > rfTarget) || (rbTicks < rbTarget)) {
             setTicks();
 
             leftMotorFront.setPower(power * multiplier);
@@ -298,7 +313,7 @@ public class Move extends LinearOpMode {
         rfTicks = rightMotorFront.getCurrentPosition() + 1;
         rbTicks = rightMotorBack.getCurrentPosition() + 1;
         if (lfTicks == 0) {
-
+            //what is supposed to go here???
         }
     }
     //lf, lb, rf, rb are multipliers for target distance
@@ -309,6 +324,17 @@ public class Move extends LinearOpMode {
         rbTarget = rbTicks + (int) (rb * target) + 1;
     }
 
+    public void resetEncoders() {
+        leftMotorFront.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftMotorBack.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightMotorFront.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightMotorBack.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        leftMotorFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        leftMotorBack.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightMotorFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightMotorBack.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+    }
 
     public void stopMotors() {
         leftMotorFront.setPower(0);
