@@ -6,8 +6,8 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
-@Autonomous(name="Wobble + Park", group="Competition")
-public class WobbleAndPark extends LinearOpMode {
+@Autonomous(name="Ring", group="Competition")
+public class RingAutonomous extends LinearOpMode {
 
     Move move = new Move(telemetry);
     Cam cam = new Cam(telemetry);
@@ -26,23 +26,19 @@ public class WobbleAndPark extends LinearOpMode {
         int zone = cam.getZone();
         move.initialize(hardwareMap);
         motors.initMotors(hardwareMap);
-        telemetry.addData("Zone: ", zone);
+        cam.endCam();
+        telemetry.addData("Rings detected: ", zone);
         telemetry.update();
         waitForStart();
-        cam.endCam();
 
         //Go To Zone
         move.startToZone(zone);
-        
+
         //Go back to corner
         move.zoneToCorner(zone, true);
-        
+
         //Go to next wobble and put it in zone
         move.secondWobble(zone);
-        
-        /*
-        //Park
-        move.zoneToCorner(zone, false);
-        */
+
     }
 }

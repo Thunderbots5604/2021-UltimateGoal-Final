@@ -85,12 +85,12 @@ public class Gyro extends LinearOpMode {
         }
         else {
             if (currentAngle - targetAngle > 180) {
-                //Left
-                return false;
-            }
-            else {
                 //Right
                 return true;
+            }
+            else {
+                //Left
+                return false;
             }
         }
     }
@@ -101,7 +101,7 @@ public class Gyro extends LinearOpMode {
         boolean side = this.closerSide(initialAngle, currentAngle);
 
         //TODO: make this make sense
-        double backOnTrackMultiplier = angleDiff * 0.001;
+        double backOnTrackMultiplier = angleDiff * Values.gyroAdjust;
         if (side) {
             backOnTrackMultiplier *= -1;
         }

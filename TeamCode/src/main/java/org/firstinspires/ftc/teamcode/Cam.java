@@ -89,9 +89,10 @@ public class Cam extends LinearOpMode {
 
         String ringCount = "";
         List<Recognition> updatedRecognitions;
+        Boolean detected = false;
 
         runTime.reset();
-        while(runTime.milliseconds() < 3000 || opModeIsActive()) {
+        while(runTime.milliseconds() < 3000) {
             telemetry.addData("Scanning", " for objects");
             telemetry.update();
             updatedRecognitions = tfod.getUpdatedRecognitions();
@@ -101,11 +102,9 @@ public class Cam extends LinearOpMode {
                 }
             }
         }
-        telemetry.addData("Rings detected: ", ringCount);
-        telemetry.update();
-        sleep(2000);
         return ringCount;
     }
+    //We'll get there eventually
     public double[] getCoords() {
         return coordinates;
     }
