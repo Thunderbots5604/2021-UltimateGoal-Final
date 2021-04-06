@@ -1,4 +1,17 @@
-
+/*
+CONTROLS
+Left stick controls movement
+Right stick controls turning
+A toggles ring grabber
+B is unallocated
+X toggles the wobble lock
+Y toggles the wobble arm
+Left bumper moves the lift up
+Right bumper moves the lift down
+Back button slows the speed of the lift
+Left trigger halves the speed of the movement
+Right trigger doubles the speed of the movement
+*/
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -12,8 +25,8 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-@TeleOp(name = "TeleOp", group = "Tele")
-public class GoodTeleOp extends OpMode {
+@TeleOp(name = "DaoTeleOp", group = "Tele")
+public class DaoTeleOp extends OpMode {
 
     private DcMotor flMotor = null;
     private DcMotor frMotor = null;
@@ -47,16 +60,11 @@ public class GoodTeleOp extends OpMode {
     private boolean pastLB = false;
     private boolean engageArm = false;
     private boolean engageLock = false;
-    private boolean swap = false;
     private boolean engageRing = false;
     private boolean halfSpeed = false;
 
-
-
-
     @Override
     public void init() {
-
         //Get Hardware Map
         flMotor = hardwareMap.get(DcMotor.class, "lmf" );
         frMotor = hardwareMap.get(DcMotor.class, "rmf" );
@@ -83,8 +91,6 @@ public class GoodTeleOp extends OpMode {
         liftL.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         liftR.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-
-
         //Set Gamepad Deadzone
         gamepad1.setJoystickDeadzone(0.05f);
 
@@ -94,19 +100,15 @@ public class GoodTeleOp extends OpMode {
 
     @Override
     public void loop() {
-        leftTrigger = gamepad2.left_trigger;
-        rightTrigger = gamepad2.right_trigger;
-
         if (gamepad1.left_stick_y != 0 || gamepad1.left_stick_x != 0) {
             //FR BL pair
             powerFRBL = (gamepad1.left_stick_x + gamepad1.left_stick_y) / Math.sqrt(2);
-            blMotor.setPower(multiplier * powerFRBL * 0.75);
-            frMotor.setPower(multiplier * powerFRBL * 0.75);
+            blMotor.setPower(multiplier * powerFRBL);
+            frMotor.setPower(multiplier * powerFRBL);
             //FL BR pair
             powerFLBR = (gamepad1.left_stick_y - gamepad1.left_stick_x) / Math.sqrt(2);
-            flMotor.setPower(multiplier * powerFLBR * 0.75);
-            brMotor.setPower(multiplier * powerFLBR* 0.75);
-
+            flMotor.setPower(multiplier * powerFLBR);
+            brMotor.setPower(multiplier * powerFLBR);
         }
         else if (gamepad1.left_stick_y == 0 && gamepad1.right_stick_x != 0) {
             flMotor.setPower(-Math.abs(multiplier) * gamepad1.right_stick_x * .7);
@@ -125,7 +127,6 @@ public class GoodTeleOp extends OpMode {
             powerFLBR = (gamepad2.left_stick_y - gamepad2.left_stick_x) / Math.sqrt(2);
             flMotor.setPower(multiplier * powerFLBR * quarterSpeed);
             brMotor.setPower(multiplier * powerFLBR * quarterSpeed);
-
         }
         else if (gamepad2.left_stick_y == 0 && gamepad2.right_stick_x != 0) {
             flMotor.setPower(-Math.abs(multiplier) * gamepad2.right_stick_x * .7 * quarterSpeed);
@@ -140,58 +141,45 @@ public class GoodTeleOp extends OpMode {
             blMotor.setPower(0);
             brMotor.setPower(0);
         }
-
-        //Reverse Toggle
+        //WobbleLocker
         if(!pastX && gamepad1.x){
-            reverse = !reverse;
-            multiplier *= -1;
-        }
-        pastX = gamepad1.x;
-
-        //Lift Mechanism Up and Down
-        if(leftTrigger > 0 ){
-            liftL.setPower(leftTrigger);
-            liftR.setPower(leftTrigger);
-
-        }
-        else if(rightTrigger > 0){
-            liftL.setPower(-rightTrigger);
-            liftR.setPower(-rightTrigger);
-        }
-        else {
-            liftL.setPower(0);
-            liftR.setPower(0);
-        }
-
-        //Halfspeed Toggle
-        if(gamepad1.a == false && pastA == true){
-            halfSpeed = !halfSpeed;
-            if(halfSpeed == true){
-                multiplier *= 0.5;
-
-            }
-            else{
-                multiplier *= 2;
-            }
-        }
-        pastA = gamepad1.a;
-
-
-        //Wobble Locker Toggle
-        if(gamepad2.x && !secondX){
             engageLock = !engageLock;
             if(engageLock){
                 WobbleLocker.setPosition(0.4);
-
             }
             else{
                 WobbleLocker.setPosition(0.5);
             }
         }
-        secondX = gamepad2.x;
+        pastX = gamepad1.x;
 
+        //Lift Mechanism Up and Down
+        if(gamepad1.left_bumper && gamepad1.back){
+            liftL.setPower(0.1);
+            liftR.setPower(0.1);
+        } else if (gamepad1.left_bumper && !gamepad1.back) {
+            liftL.setPower(0.5);
+            liftR.setPower(0.5);
+        } else if (gamepad1.right_bumper && gamepad1.back) {
+            liftL.setPower(-0.1);
+            liftR.setPower(-0.1);
+        } else if (gamepad1.right_bumper && !gamepad1.back) {
+            liftL.setPower(-0.5);
+            liftR.setPower(-0.5);
+        } else {
+            liftL.setPower(0);
+            liftR.setPower(0);
+        }
+        //Speed Toggle
+        if (gamepad1.left_trigger > 0.8){
+            multiplier = 0.5;
+        } else if (gamepad1.right_trigger > 0.8) {
+            multiplier = 2;
+        } else {
+            multiplier = 1;
+        }
         //Wobble Arm Toggle
-        if(gamepad2.y && !pastY){
+        if(gamepad1.y && !pastY){
             engageArm = !engageArm;
             if(engageArm){
                 WobbleArm.setPosition(1);
@@ -200,10 +188,10 @@ public class GoodTeleOp extends OpMode {
                 WobbleArm.setPosition(0);
             }
         }
-        pastY = gamepad2.y;
+        pastY = gamepad1.y;
 
         //Ring Grabbing Toggle
-        if(gamepad2.a && !secondA){
+        if(gamepad1.a && !secondA){
             ring = !ring;
             if(ring){
                 RingArm.setPosition(1);
@@ -212,7 +200,7 @@ public class GoodTeleOp extends OpMode {
                 RingArm.setPosition(0.6);
             }
         }
-        secondA = gamepad2.a;
+        secondA = gamepad1.a;
 
 
         if(gamepad2.back) {
@@ -228,8 +216,6 @@ public class GoodTeleOp extends OpMode {
             liftR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         }
-
-        telemetry.addData("Swap mode: ", swap);
         telemetry.addData("Front Right Motor = ", frMotor.getCurrentPosition());
         telemetry.addData("Front Left Motor = ", flMotor.getCurrentPosition());
         telemetry.addData("Front Left Motor = ", brMotor.getCurrentPosition());

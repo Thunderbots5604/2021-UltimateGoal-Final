@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.Servo;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -22,6 +23,9 @@ public class Move extends LinearOpMode {
     private Servo WobbleLocker;
     private Servo WobbleArm;
     private Servo RingArm;
+
+    private ColorSensor frontColor;
+    private ColorSensor backColor;
 
     private boolean engageArm = false;
     private boolean engageLock = false;
@@ -45,8 +49,6 @@ public class Move extends LinearOpMode {
     private int tileLength = Values.tileLength;
     private double power = Values.power;
 
-
-
     public Move(Telemetry telemetry) {
         this.telemetry = telemetry;
     }
@@ -56,53 +58,140 @@ public class Move extends LinearOpMode {
     public void runOpMode() {}
 
     public void startToZone(int zone) {
+        motors.dropArm();
         switch (zone) {
             case 0:
-                move(325 + tileLength * 2, power, "forward");
-                sleep(100);
-                move(325 + tileLength * 2, power, "backward");
+                move(halfOfField, power, "forward");
+                move(100, power, "forward");
                 break;
             case 1:
-                move(halfOfField + tileLength * 1, power, "forward");
+                move(halfOfField, power, "forward");
                 sleep(100);
-                move(325, power, "strafe right");
+                move(10, power * .8, "turn right");
                 sleep(100);
-                move(halfOfField + tileLength * 1, power, "backward");
+                move(200, power, "forward");
+                sleep(100);
+                move(15, power * .8, "turn right");
+                move((int) (tileLength * (zone + .5)) - 200, power, "forward");
                 break;
             case 2:
-                move(halfOfField + tileLength * 2, power, "forward");
+                move(halfOfField, power, "forward");
                 sleep(100);
-                move(halfOfField + tileLength * 2, power, "backward");
+                move((int) (tileLength * (zone + .5)), power, "forward");
+                sleep(100);
+                move(tileLength / 2, power, "backward");
+                sleep(100);
+                move(tileLength, power, "strafe right");
+                sleep(100);
+                move(tileLength, power, "forward");
+                sleep(100);
+                move(tileLength, power, "strafe left");
                 break;
             default:
                 break;
         }
+        motors.resetArm();
+        sleep(1500);
+        move(0, power, "gyro turn");
     }
-    public void zoneToCorner(int zone, boolean corner) {
-        move(tileLength / 2, power, "backward");
-        move(tileLength / 2, .5, "strafe left");
+    public void zoneToCorner(int zone) {
+        move(halfOfField, power, "backward");
         if (zone == 1) {
-            move(tileLength, .5, "strafe left");
+            move(tileLength, power, "strafe left");
         }
-        if (corner) {
-            move(halfOfField + tileLength * zone, power, "backward");
-        }
-        else {
-            move(tileLength * zone, power, "backward");
-        }
+        move((int) (tileLength * (zone + .5)), power, "backward");
     }
 
     public void secondWobble(int zone){
-        move((int) (tileLength * 1.5), 0.3, "strafe right");
+        move(50, power, "backward");
+        move(20, power, "forward");
+        move(400, power, "strafe right");
+        sideToBlue(false);
+        sleep(1000);
+        //dropping the arm too early???
         motors.dropArm();
-        move(tileLength, 0.3, "strafe left");
-
-
-        //Do more Stuff
+        sleep(1000);
+        move(200, power, "strafe left");
+        sleep(100);
+        sideToBlue(true);
+        sleep(100);
         startToZone(zone);
-        motors.resetArm();
+        if (zone == 0) {
+            move(50, power, "backward");
+            sleep(100);
+            move(tileLength, power, "strafe right");
+            sleep(100);
+            move(300, power, "forward");
+        }
+        sleep(100);
+        move((int) (tileLength * 0.3), power, "strafe left");
     }
-
+    public void parkToWhite(HardwareMap hardwaremap, boolean direction) {
+        //true is forwards, false is backwards
+        boolean running = true;
+        int[] reading = new int[5];
+        if (direction) {
+            leftMotorFront.setPower(0.3);
+            leftMotorBack.setPower(0.3);
+            rightMotorFront.setPower(0.3);
+            rightMotorBack.setPower(0.3);
+        } else {
+            leftMotorFront.setPower(-0.3);
+            leftMotorBack.setPower(-0.3);
+            rightMotorFront.setPower(-0.3);
+            rightMotorBack.setPower(-0.3);
+        }
+        while (running) {
+            if (direction) {
+                reading = motors.getReading(backColor);
+            } else {
+                reading = motors.getReading(frontColor);
+            }
+            if (reading[3] > 100) {
+                running = false;
+            }
+            telemetry.addData("R ", reading[0]);
+            telemetry.addData("G ", reading[1]);
+            telemetry.addData("B ", reading[2]);
+            telemetry.addData("L ", reading[3]);
+            telemetry.addData("A ", reading[4]);
+            telemetry.update();
+        }
+        if (!direction) {
+            moveForward((int) (tileLength * 0.15), power);
+        } else {
+            moveBackward((int) (tileLength * 0.15), power);
+        }
+    }
+    public void sideToBlue(boolean direction) {
+        //true is left, false is right
+        boolean running = true;
+        int[] reading = new int[5];
+        if (direction) {
+            leftMotorFront.setPower(-0.3);
+            leftMotorBack.setPower(0.3);
+            rightMotorFront.setPower(0.3);
+            rightMotorBack.setPower(-0.3);
+        } else {
+            leftMotorFront.setPower(0.3);
+            leftMotorBack.setPower(-0.3);
+            rightMotorFront.setPower(-0.3);
+            rightMotorBack.setPower(0.3);
+        }
+        while (running) {
+            reading = motors.getReading(backColor);
+            if (reading[2] > 110) {
+                running = false;
+            }
+            telemetry.addData("R ", reading[0]);
+            telemetry.addData("G ", reading[1]);
+            telemetry.addData("B ", reading[2]);
+            telemetry.addData("L ", reading[3]);
+            telemetry.addData("A ", reading[4]);
+            telemetry.update();
+        }
+        stopMotors();
+    }
     public void initialize(HardwareMap hardwareMap) {
 
         leftMotorFront = hardwareMap.get(DcMotor.class, "lmf");
@@ -113,6 +202,9 @@ public class Move extends LinearOpMode {
         WobbleLocker = hardwareMap.get(Servo.class, "WobbleLocker");
         RingArm = hardwareMap.get(Servo.class, "RingGrabber");
         WobbleArm = hardwareMap.get(Servo.class, "WobbleArm");
+
+        frontColor = hardwareMap.get(ColorSensor.class, "fc");
+        backColor = hardwareMap.get(ColorSensor.class, "bc");
 
         leftMotorFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         leftMotorBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -127,6 +219,19 @@ public class Move extends LinearOpMode {
 
         telemetry.addData("Status", "Initialized");
         telemetry.update();
+    }
+
+    public void forwardToBlue(){
+        while(frontColor.blue() < 130){
+            leftMotorFront.setPower(power);
+            leftMotorBack.setPower(power);
+            rightMotorFront.setPower(power);
+            rightMotorBack.setPower(power);
+        }
+        leftMotorFront.setPower(0);
+        leftMotorBack.setPower(0);
+        rightMotorFront.setPower(0);
+        rightMotorBack.setPower(0);
     }
     public void move(int distance, double power, String direction) {
         switch (direction.toLowerCase()) {
@@ -205,7 +310,6 @@ public class Move extends LinearOpMode {
             telemetry.addData("multiplier: ", multiplier);
             telemetry.update();
         }
-
         stopMotors();
     }
     public void moveBackward(int target, double power) {
@@ -280,7 +384,7 @@ public class Move extends LinearOpMode {
 
         double angleAdjuster;
         double multiplier = 1;
-        while(((lfTicks > lfTarget) || (lbTicks < lbTarget) || (rfTicks < rfTarget) || (rbTicks > rbTarget))) {
+        while(((lfTicks > lfTarget) && (lbTicks < lbTarget) && (rfTicks < rfTarget) && (rbTicks > rbTarget))) {
             setTicks();
 
             leftMotorFront.setPower(-power * multiplier);
@@ -297,7 +401,7 @@ public class Move extends LinearOpMode {
 
         double angleAdjuster;
         double multiplier = 1;
-        while((lfTicks < lfTarget) || (lbTicks > lbTarget) || (rfTicks > rfTarget) || (rbTicks < rbTarget)) {
+        while((lfTicks < lfTarget) && (lbTicks > lbTarget) && (rfTicks > rfTarget) && (rbTicks < rbTarget)) {
             setTicks();
 
             leftMotorFront.setPower(power * multiplier);
@@ -308,20 +412,17 @@ public class Move extends LinearOpMode {
         stopMotors();
     }
     public void setTicks() {
-        lfTicks = leftMotorFront.getCurrentPosition() + 1;
-        lbTicks = leftMotorBack.getCurrentPosition() + 1;
-        rfTicks = rightMotorFront.getCurrentPosition() + 1;
-        rbTicks = rightMotorBack.getCurrentPosition() + 1;
-        if (lfTicks == 0) {
-            //what is supposed to go here???
-        }
+        lfTicks = leftMotorFront.getCurrentPosition();
+        lbTicks = leftMotorBack.getCurrentPosition();
+        rfTicks = rightMotorFront.getCurrentPosition();
+        rbTicks = rightMotorBack.getCurrentPosition();
     }
     //lf, lb, rf, rb are multipliers for target distance
     public void setTargets(int target, double lf, double lb, double rf, double rb) {
-        lfTarget = lfTicks + (int) (lf * target) + 1;
-        lbTarget = lbTicks + (int) (lb * target) + 1;
-        rfTarget = rfTicks + (int) (rf * target) + 1;
-        rbTarget = rbTicks + (int) (rb * target) + 1;
+        lfTarget = lfTicks + (int) (lf * target);
+        lbTarget = lbTicks + (int) (lb * target);
+        rfTarget = rfTicks + (int) (rf * target);
+        rbTarget = rbTicks + (int) (rb * target);
     }
 
     public void resetEncoders() {

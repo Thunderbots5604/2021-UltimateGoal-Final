@@ -104,6 +104,7 @@ public class Cam extends LinearOpMode {
         }
         return ringCount;
     }
+    //We'll get there eventually
     public double[] getCoords() {
         return coordinates;
     }
