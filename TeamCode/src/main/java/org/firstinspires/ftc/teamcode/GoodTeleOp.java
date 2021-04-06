@@ -149,7 +149,7 @@ public class GoodTeleOp extends OpMode {
         pastX = gamepad1.x;
 
         //Lift Mechanism Up and Down
-        if(leftTrigger > 0 ){
+        if(leftTrigger > 0 && ((liftL.getCurrentPosition() < -5 && liftR.getCurrentPosition() < -5) || gamepad1.right_bumper) ){
             liftL.setPower(leftTrigger);
             liftR.setPower(leftTrigger);
 
