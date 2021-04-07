@@ -24,10 +24,12 @@ public class Test extends LinearOpMode {
         //motors.testReading();
         waitForStart();
         //move.forwardToBlue();
-        motors.resetArm();
+        while(opModeIsActive()) {
+            telemetry.addData("Op Mode", " Is Active");
+            telemetry.update();
+        }
+        telemetry.addData("Op Mode", " Is Off");
+        telemetry.update();
         sleep(5000);
-        motors.dropArm();
-        sleep(5000);
-        motors.resetArm();
     }
 }

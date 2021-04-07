@@ -20,7 +20,6 @@ public class WobbleAndPark1 extends LinearOpMode {
 
     @Override
     public void runOpMode() throws InterruptedException {
-
         //Init and find zone to go to
         cam.startCam();
         int zone = cam.getZone();
@@ -38,8 +37,5 @@ public class WobbleAndPark1 extends LinearOpMode {
             sleep(1000);
         }
         move.parkToWhite(hardwareMap, false);
-        if (zone == 0) {
-            move.move(300, power, "strafe left");
-        }
     }
 }

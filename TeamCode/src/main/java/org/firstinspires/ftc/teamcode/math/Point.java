@@ -23,6 +23,11 @@ public class Point implements Cloneable{
         this(0,0);
     }
 
+    //get the origin as a point
+    public static Point origin() {
+        return new Point();
+    }
+
     //clone method
     @Override
     public Point clone() {
@@ -69,6 +74,15 @@ public class Point implements Cloneable{
     //scalar multiplication
     public void scale(double scaleFactor) {
         this.setX(scaleFactor * this.getX());
+        this.setY(scaleFactor * this.getY());
+    }
+
+    //return a unit vector
+    public Point getUnitVector() {
+        Point unitVector = this.clone();
+        //scale doesn't return the point, so this needs to be done separate form return statement
+        unitVector.scale(1 / unitVector.distance());
+        return unitVector;
     }
 
     public double getX() {

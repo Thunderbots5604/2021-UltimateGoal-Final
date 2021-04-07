@@ -64,7 +64,7 @@ public class Others extends LinearOpMode {
     }
     public void dropArm() {
         RingArm.setPosition(0.61);
-        sleep(1500);
+        sleep(1200);
     }
     public void resetArm() {
         RingArm.setPosition(0);

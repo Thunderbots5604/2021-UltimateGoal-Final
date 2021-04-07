@@ -1,5 +1,5 @@
 /*A set of various utilities used for things in our math package
-* everything here should be static*/
+ * everything here should be static*/
 
 package org.firstinspires.ftc.teamcode.math;
 

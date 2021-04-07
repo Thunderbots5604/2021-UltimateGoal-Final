@@ -24,6 +24,8 @@ import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
+import org.firstinspires.ftc.teamcode.hardware.MecanumDrive;
+import org.firstinspires.ftc.teamcode.math.Point;
 
 @TeleOp(name = "DaoTeleOp", group = "Tele")
 public class DaoTeleOp extends OpMode {
@@ -63,13 +65,20 @@ public class DaoTeleOp extends OpMode {
     private boolean engageRing = false;
     private boolean halfSpeed = false;
 
+    private MecanumDrive drive;
+
     @Override
     public void init() {
         //Get Hardware Map
-        flMotor = hardwareMap.get(DcMotor.class, "lmf" );
-        frMotor = hardwareMap.get(DcMotor.class, "rmf" );
-        blMotor = hardwareMap.get(DcMotor.class, "lmb" );
-        brMotor = hardwareMap.get(DcMotor.class, "rmb" );
+        drive = new MecanumDrive(hardwareMap, "lmf", "rmf", "lmb", "rmb");
+
+        drive.resetPowerValues();
+
+        telemetry.addData("lmf power", drive.getFrontLeftMotorPower());
+        telemetry.addData("rmf power", drive.getFrontRightMotorPower());
+        telemetry.addData("lmb power", drive.getBackLeftMotorPower());
+        telemetry.addData("rmb power", drive.getBackRightMotorPower());
+
         liftL = hardwareMap.get(DcMotor.class, "LiftMechL");
         liftR = hardwareMap.get(DcMotor.class, "LiftMechR");
 
@@ -79,11 +88,6 @@ public class DaoTeleOp extends OpMode {
 
         frontColor = hardwareMap.get(ColorSensor.class, "fc");
         backColor = hardwareMap.get(ColorSensor.class, "bc");
-
-        //Reverse Motor Directions to Drive Straight
-        flMotor.setDirection(DcMotorSimple.Direction.REVERSE);
-        blMotor.setDirection(DcMotorSimple.Direction.REVERSE);
-        liftL.setDirection(DcMotorSimple.Direction.REVERSE);
 
         liftL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         liftR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -100,47 +104,15 @@ public class DaoTeleOp extends OpMode {
 
     @Override
     public void loop() {
-        if (gamepad1.left_stick_y != 0 || gamepad1.left_stick_x != 0) {
-            //FR BL pair
-            powerFRBL = (gamepad1.left_stick_x + gamepad1.left_stick_y) / Math.sqrt(2);
-            blMotor.setPower(multiplier * powerFRBL);
-            frMotor.setPower(multiplier * powerFRBL);
-            //FL BR pair
-            powerFLBR = (gamepad1.left_stick_y - gamepad1.left_stick_x) / Math.sqrt(2);
-            flMotor.setPower(multiplier * powerFLBR);
-            brMotor.setPower(multiplier * powerFLBR);
-        }
-        else if (gamepad1.left_stick_y == 0 && gamepad1.right_stick_x != 0) {
-            flMotor.setPower(-Math.abs(multiplier) * gamepad1.right_stick_x * .7);
-            blMotor.setPower(-Math.abs(multiplier) * gamepad1.right_stick_x * .7);
-            frMotor.setPower(Math.abs(multiplier) * gamepad1.right_stick_x * .7);
-            brMotor.setPower(Math.abs(multiplier) * gamepad1.right_stick_x * .7);
-            telemetry.addData("Right stick", gamepad1.right_stick_x);
-        }
-        //Second Drive at Quarter Speed
-        else if (gamepad2.left_stick_y != 0 || gamepad2.left_stick_x != 0) {
-            //FR BL pair
-            powerFRBL = (gamepad2.left_stick_x + gamepad2.left_stick_y) / Math.sqrt(2);
-            blMotor.setPower(multiplier * powerFRBL * quarterSpeed);
-            frMotor.setPower(multiplier * powerFRBL * quarterSpeed);
-            //FL BR pair
-            powerFLBR = (gamepad2.left_stick_y - gamepad2.left_stick_x) / Math.sqrt(2);
-            flMotor.setPower(multiplier * powerFLBR * quarterSpeed);
-            brMotor.setPower(multiplier * powerFLBR * quarterSpeed);
-        }
-        else if (gamepad2.left_stick_y == 0 && gamepad2.right_stick_x != 0) {
-            flMotor.setPower(-Math.abs(multiplier) * gamepad2.right_stick_x * .7 * quarterSpeed);
-            blMotor.setPower(-Math.abs(multiplier) * gamepad2.right_stick_x * .7 * quarterSpeed);
-            frMotor.setPower(Math.abs(multiplier) * gamepad2.right_stick_x * .7 * quarterSpeed);
-            brMotor.setPower(Math.abs(multiplier) * gamepad2.right_stick_x * .7 * quarterSpeed);
-            telemetry.addData("Right stick", gamepad2.right_stick_x);
-        }
-        else {
-            flMotor.setPower(0);
-            frMotor.setPower(0);
-            blMotor.setPower(0);
-            brMotor.setPower(0);
-        }
+        drive.resetPowerValues();
+        cheat(gamepad1.left_stick_x, gamepad1.left_stick_y);
+        drive.radialMove(gamepad1.right_stick_x * multiplier * 0.25);
+        drive.updateMotorPowers();
+        telemetry.addData("lmf power", drive.getFrontLeftMotorPower());
+        telemetry.addData("rmf power", drive.getFrontRightMotorPower());
+        telemetry.addData("lmb power", drive.getBackLeftMotorPower());
+        telemetry.addData("rmb power", drive.getBackRightMotorPower());
+
         //WobbleLocker
         if(!pastX && gamepad1.x){
             engageLock = !engageLock;
@@ -154,16 +126,16 @@ public class DaoTeleOp extends OpMode {
         pastX = gamepad1.x;
 
         //Lift Mechanism Up and Down
-        if(gamepad1.left_bumper && gamepad1.back){
+        if(gamepad1.left_bumper && gamepad1.back && ((liftL.getCurrentPosition() < -5 && liftR.getCurrentPosition() < -5) || gamepad1.right_bumper)){
             liftL.setPower(0.1);
             liftR.setPower(0.1);
-        } else if (gamepad1.left_bumper && !gamepad1.back) {
+        } else if (gamepad1.left_bumper && ((liftL.getCurrentPosition() < -5 && liftR.getCurrentPosition() < -5) || gamepad1.right_bumper)) {
             liftL.setPower(0.5);
             liftR.setPower(0.5);
         } else if (gamepad1.right_bumper && gamepad1.back) {
             liftL.setPower(-0.1);
             liftR.setPower(-0.1);
-        } else if (gamepad1.right_bumper && !gamepad1.back) {
+        } else if (gamepad1.right_bumper) {
             liftL.setPower(-0.5);
             liftR.setPower(-0.5);
         } else {
@@ -201,41 +173,24 @@ public class DaoTeleOp extends OpMode {
             }
         }
         secondA = gamepad1.a;
-
-
-        if(gamepad2.back) {
-            flMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            frMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            blMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            brMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            flMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            frMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            blMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            brMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            liftL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            liftR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
-        }
-        telemetry.addData("Front Right Motor = ", frMotor.getCurrentPosition());
-        telemetry.addData("Front Left Motor = ", flMotor.getCurrentPosition());
-        telemetry.addData("Front Left Motor = ", brMotor.getCurrentPosition());
-        telemetry.addData("Front Left Motor = ", frMotor.getCurrentPosition());
+        telemetry.addData("Swap mode = ", String.valueOf(gamepad1.back));
         telemetry.addData("LiftMech = ", liftL.getCurrentPosition());
-        telemetry.addData("Arm Servo = ", WobbleArm.getPosition() );
-        telemetry.addData("Reverse = ", reverse);
-        telemetry.addData("halfSpeed = ", halfSpeed );
-        telemetry.addData("Ring Arm = ", ring );
+        telemetry.addData("Arm Servo = ", WobbleArm.getPosition());
+        telemetry.addData("Ring Arm = ", ring);
         telemetry.addData("WobbleLocker", engageLock);
-        telemetry.addData("Blue Back = ", backColor.blue());
-        telemetry.addData("Blue Front = ", frontColor.blue());
         telemetry.update();
     }
+    private void cheat(double x, double y) {
+        if (x == 0 && y == 0) {
+            return;
+        }
+        Point direction = new Point(x, y);
+        double power = Math.sqrt(x*x + y*y) * 0.25 * multiplier;
+        drive.linearMove(direction, power);
+    }
 
+    @Override
     public void stop() {
-        //Turn Off Motors
-        flMotor.setPower(0);
-        frMotor.setPower(0);
-        blMotor.setPower(0);
-        brMotor.setPower(0);
+        drive.stop();
     }
 }

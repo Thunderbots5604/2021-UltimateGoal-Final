@@ -1,7 +1,7 @@
 /* This class can be used to draw a line between two points
-* Note that it functions a bit like a vector in that it is directional
-* since it has a startpoint and an endpoint. Also, technically a line
-* segment because it's not infinite.*/
+ * Note that it functions a bit like a vector in that it is directional
+ * since it has a startpoint and an endpoint. Also, technically a line
+ * segment because it's not infinite.*/
 
 package org.firstinspires.ftc.teamcode.math;
 
@@ -64,6 +64,18 @@ public class Line implements Cloneable{
     public void translateWholeLine(Point translateBy) {
         this.translateEndPoint(translateBy);
         this.translateStartPoint(translateBy);
+    }
+
+    //translate a version of the line with the start at the origin
+    public Line startAtOrigin() {
+        //make a copy of this line
+        Line originLine =  this.clone();
+        //calculate how much you need to translate by to get to the origin
+        Point translationFactor = Point.origin().minus(originLine.getStartPoint());
+        //translate the originLine by that amount
+        originLine.translateWholeLine(translationFactor);
+        //return the new line
+        return originLine;
     }
 
     //flip the line, so end point becomes start point and start point becomes end point

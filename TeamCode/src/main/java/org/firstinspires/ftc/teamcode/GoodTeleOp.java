@@ -42,6 +42,7 @@ public class GoodTeleOp extends OpMode {
     private boolean secondX = false;
     private boolean pastY = false;
     private boolean pastB = false;
+    private boolean secondB = false;
     private boolean pastA = false;
     private boolean secondA = false;
     private boolean pastLB = false;
@@ -92,10 +93,16 @@ public class GoodTeleOp extends OpMode {
         telemetry.update();
     }
 
+    public void start(){
+        RingArm.setPosition(0.6);
+
+    }
+
     @Override
     public void loop() {
         leftTrigger = gamepad2.left_trigger;
         rightTrigger = gamepad2.right_trigger;
+
 
         if (gamepad1.left_stick_y != 0 || gamepad1.left_stick_x != 0) {
             //FR BL pair
@@ -149,14 +156,14 @@ public class GoodTeleOp extends OpMode {
         pastX = gamepad1.x;
 
         //Lift Mechanism Up and Down
-        if(leftTrigger > 0 && ((liftL.getCurrentPosition() < -5 && liftR.getCurrentPosition() < -5) || gamepad1.right_bumper) ){
-            liftL.setPower(leftTrigger);
-            liftR.setPower(leftTrigger);
+        if(leftTrigger > 0 && ((liftL.getCurrentPosition() < -2 || liftR.getCurrentPosition() < -2) || gamepad2.right_bumper)){
+            liftL.setPower(leftTrigger / 2);
+            liftR.setPower(leftTrigger / 2);
 
         }
         else if(rightTrigger > 0){
-            liftL.setPower(-rightTrigger);
-            liftR.setPower(-rightTrigger);
+            liftL.setPower(-rightTrigger / 2);
+            liftR.setPower(-rightTrigger / 2);
         }
         else {
             liftL.setPower(0);
@@ -194,7 +201,9 @@ public class GoodTeleOp extends OpMode {
         if(gamepad2.y && !pastY){
             engageArm = !engageArm;
             if(engageArm){
-                WobbleArm.setPosition(1);
+                WobbleArm.setPosition(0.9);
+                WobbleLocker.setPosition(0.5);
+
             }
             else{
                 WobbleArm.setPosition(0);
@@ -206,13 +215,25 @@ public class GoodTeleOp extends OpMode {
         if(gamepad2.a && !secondA){
             ring = !ring;
             if(ring){
-                RingArm.setPosition(1);
+                RingArm.setPosition(0.9);
             }
             else{
-                RingArm.setPosition(0.6);
+                RingArm.setPosition(0.65);
             }
         }
         secondA = gamepad2.a;
+
+        //Ring Arm all the way up
+        if(gamepad2.b && !secondB){
+            ring = !ring;
+            if(ring){
+                RingArm.setPosition(0.1);
+            }
+            else{
+                RingArm.setPosition(0.65);
+            }
+        }
+        secondB = gamepad2.b;
 
 
         if(gamepad2.back) {
@@ -226,7 +247,8 @@ public class GoodTeleOp extends OpMode {
             brMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             liftL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
             liftR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
+            liftL.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            liftR.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         }
 
         telemetry.addData("Swap mode: ", swap);
