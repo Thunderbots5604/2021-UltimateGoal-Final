@@ -11,17 +11,25 @@ public class Test extends LinearOpMode {
 
     Cam cam = new Cam(telemetry);
     Move move = new Move(telemetry);
-    
+    Others motors = new Others(telemetry);
+
     int halfOfField = Values.halfOfField;
     int tileLength = Values.tileLength;
     double power = Values.power;
-    
+
     @Override
     public void runOpMode() {
         move.initialize(hardwareMap);
-        
+        motors.initMotors(hardwareMap);
+        //motors.testReading();
         waitForStart();
-        
-        move.move(halfOfField, power, "forward");
+        //move.forwardToBlue();
+        while(opModeIsActive()) {
+            telemetry.addData("Op Mode", " Is Active");
+            telemetry.update();
+        }
+        telemetry.addData("Op Mode", " Is Off");
+        telemetry.update();
+        sleep(5000);
     }
 }

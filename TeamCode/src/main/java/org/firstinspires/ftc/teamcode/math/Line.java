@@ -66,6 +66,18 @@ public class Line implements Cloneable{
         this.translateStartPoint(translateBy);
     }
 
+    //translate a version of the line with the start at the origin
+    public Line startAtOrigin() {
+        //make a copy of this line
+        Line originLine =  this.clone();
+        //calculate how much you need to translate by to get to the origin
+        Point translationFactor = Point.origin().minus(originLine.getStartPoint());
+        //translate the originLine by that amount
+        originLine.translateWholeLine(translationFactor);
+        //return the new line
+        return originLine;
+    }
+
     //flip the line, so end point becomes start point and start point becomes end point
     public Line flip() {
         return new Line(this.getEndPoint(), this.getStartPoint());

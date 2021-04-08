@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.Servo;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -8,10 +9,13 @@ import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 @Autonomous(name = "Move", group = "")
 @Disabled
 public class Move extends LinearOpMode {
+
+    public ElapsedTime runtime = new ElapsedTime();
 
     public DcMotor leftMotorFront = null;
     public DcMotor leftMotorBack = null;
@@ -22,6 +26,9 @@ public class Move extends LinearOpMode {
     private Servo WobbleLocker;
     private Servo WobbleArm;
     private Servo RingArm;
+
+    private ColorSensor frontColor;
+    private ColorSensor backColor;
 
     private boolean engageArm = false;
     private boolean engageLock = false;
@@ -54,53 +61,152 @@ public class Move extends LinearOpMode {
     public void runOpMode() {}
 
     public void startToZone(int zone) {
+        if (zone == 2) {
+            this.power += .15;
+        }
+        motors.dropArm();
+        move(halfOfField, power, "forward");
+        sleep(100);
         switch (zone) {
             case 0:
-                move(halfOfField, power, "forward");
+                move(100, power, "forward");
                 break;
             case 1:
-                move(halfOfField, power, "forward");
+                move(10, power * .8, "turn right");
                 sleep(100);
-                move((int) (tileLength * (zone + .5)), power * .9, "forward");
+                move(200, power, "forward");
                 sleep(100);
-                move((int) (tileLength * .8), power, "strafe right");
+                move(15, power * .8, "turn right");
+                move((int) (tileLength * (zone + .5)) - 200, power, "forward");
                 break;
             case 2:
-                move(halfOfField, power, "forward");
-                sleep(100);
-                move((int) (tileLength * (zone + .5)), power * .9, "forward");
-                break;
-            default:
+                move((int) (tileLength * (zone + .5)), power, "forward");
                 break;
         }
-        move(100, power, "strafe left");
         motors.resetArm();
+        sleep(1500);
+        move(0, power, "gyro turn");
     }
-    public void zoneToCorner(int zone, boolean corner) {
-        move(tileLength / 2, power, "backward");
-        move(tileLength / 2, .5, "strafe left");
-        if (zone == 1) {
-            move(tileLength, .5, "strafe left");
+    public void zoneToCorner(int zone) {
+        move(100, power, "backward");
+        move((tileLength / 2) - 100, power, "strafe left");
+        if(zone == 1) {
+            move(tileLength / 2, power, "strafe left");
         }
-        if (corner) {
-            move(halfOfField, power, "backward");
+        move(100, power, "strafe right");
+        if (zone != 0) {
+            move(200, power, "strafe right");
+            parkToWhite(hardwareMap, false);
+            move(0, power, "gyro turn");
+            move(halfOfField + 375 - (zone * 50), power, "backward");
         }
-        move((tileLength * zone) - 150, power * .7, "backward");
+        else {
+            move(halfOfField - 150, power * .75, "backward");
+        }
+        sleep(500);
+        move(0, power, "gyro turn");
     }
 
     public void secondWobble(int zone){
-        motors.resetArm();
-        move((int) (tileLength * 2.75), power, "strafe right");
+        if (zone == 2) {
+            this.power -= .15;
+        }
+        move(tileLength, power, "strafe right");
+        move(30, power * .8, "backward");
+        sleep(300);
+        sideToBlue(false);
+        move(10, power * .8, "strafe right");
         sleep(300);
         motors.dropArm();
-        sleep(1000);
-        move((int) (tileLength * 2.8), power, "strafe left");
+        move(tileLength / 2, power * .8, "forward");
+        if (zone == 0) {
+            move(31, power * .9, "turn left");
+            move((int) (tileLength * 3.2), power, "forward");
+        }
+        else if (zone == 1) {
+            move(tileLength, power, "forward");
+            sleep(500);
+            move(10, power * .9, "gyro turn");
+            move((int) (tileLength * 2.5), power, "forward");
+        }
+        else if (zone == 2) {
+            move(3, power, "turn left");
+            move(tileLength * 2, power, "forward");
+            sleep(500);
+            move(38, power * .9, "gyro turn");
+            move((int) (tileLength * 3.7), power + .05, "forward");
+        }
+        sleep(500);
         
-        //Goes back to zone
-        startToZone(zone);
-        motors.resetArm();
+        if (zone != 2) {
+            move(tileLength / 2, power, "backward");
+            move(tileLength, power, "strafe right");
+            move(0, power, "gyro turn");
+            move(tileLength, power, "forward");
+        }
+        else {
+            move(tileLength / 2, power, "backward");
+            move(0, power, "gyro turn");
+        }
+        
+        parkToWhite(hardwareMap, false);
     }
-
+    public void parkToWhite(HardwareMap hardwaremap, boolean direction) {
+        //true is forwards, false is backwards
+        boolean running = true;
+        int[] reading = new int[5];
+        if (direction) {
+            leftMotorFront.setPower(0.3);
+            leftMotorBack.setPower(0.3);
+            rightMotorFront.setPower(0.3);
+            rightMotorBack.setPower(0.3);
+        } else {
+            leftMotorFront.setPower(-0.3);
+            leftMotorBack.setPower(-0.3);
+            rightMotorFront.setPower(-0.3);
+            rightMotorBack.setPower(-0.3);
+        }
+        runtime.reset();
+        while (running && runtime.milliseconds() < 2000) {
+            if (direction) {
+                reading = motors.getReading(backColor);
+            } else {
+                reading = motors.getReading(frontColor);
+            }
+            if (reading[3] > 100) {
+                running = false;
+            }
+        }
+        if (!direction) {
+            moveForward((int) (tileLength * 0.15), power);
+        } else {
+            moveBackward((int) (tileLength * 0.15), power);
+        }
+    }
+    public void sideToBlue(boolean direction) {
+        //true is left, false is right
+        boolean running = true;
+        int[] reading = new int[5];
+        if (direction) {
+            leftMotorFront.setPower(-0.3);
+            leftMotorBack.setPower(0.3);
+            rightMotorFront.setPower(0.3);
+            rightMotorBack.setPower(-0.3);
+        } else {
+            leftMotorFront.setPower(0.3);
+            leftMotorBack.setPower(-0.3);
+            rightMotorFront.setPower(-0.3);
+            rightMotorBack.setPower(0.3);
+        }
+        runtime.reset();
+        while (running && runtime.milliseconds() < 2500) {
+            reading = motors.getReading(backColor);
+            if (reading[2] > 100) {
+                running = false;
+            }
+        }
+        stopMotors();
+    }
     public void initialize(HardwareMap hardwareMap) {
 
         leftMotorFront = hardwareMap.get(DcMotor.class, "lmf");
@@ -111,6 +217,9 @@ public class Move extends LinearOpMode {
         WobbleLocker = hardwareMap.get(Servo.class, "WobbleLocker");
         RingArm = hardwareMap.get(Servo.class, "RingGrabber");
         WobbleArm = hardwareMap.get(Servo.class, "WobbleArm");
+
+        frontColor = hardwareMap.get(ColorSensor.class, "fc");
+        backColor = hardwareMap.get(ColorSensor.class, "bc");
 
         leftMotorFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         leftMotorBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -158,6 +267,9 @@ public class Move extends LinearOpMode {
         double turnAmount = gyro.getAngleDifference(currentAngle, finalAngle);
         boolean turnTowards = gyro.closerSide(currentAngle, finalAngle);
 
+        if (turnAmount < 3) {
+            return;
+        }
         if (!turnTowards) {
             telemetry.addData("Turning", "Left");
             telemetry.update();
@@ -215,7 +327,8 @@ public class Move extends LinearOpMode {
 
         double angleAdjuster;
         double multiplier = 1;
-        while(((lfTicks > lfTarget) || (lbTicks > lbTarget) || (rfTicks > rfTarget) || (rbTicks > rbTarget))) {
+        runtime.reset();
+        while(runtime.milliseconds() < 3000 && ((lfTicks > lfTarget) || (lbTicks > lbTarget) || (rfTicks > rfTarget) || (rbTicks > rbTarget))) {
             setTicks();
 
             angleAdjuster = gyro.angleAdjust(initialAngle) * power;
@@ -228,22 +341,24 @@ public class Move extends LinearOpMode {
                 move((int) initialAngle, power, "gyro turn");
             }
 
-            leftMotorFront.setPower(-(power + angleAdjuster) * multiplier);
-            leftMotorBack.setPower(-(power + angleAdjuster) * multiplier);
-            rightMotorFront.setPower(-(power - angleAdjuster) * multiplier);
-            rightMotorBack.setPower(-(power - angleAdjuster) * multiplier);
+            leftMotorFront.setPower(-(power - angleAdjuster) * multiplier);
+            leftMotorBack.setPower(-(power - angleAdjuster) * multiplier);
+            rightMotorFront.setPower(-(power + angleAdjuster) * multiplier);
+            rightMotorBack.setPower(-(power + angleAdjuster) * multiplier);
         }
 
         stopMotors();
     }
     public void turnLeft(int target, double power) {
+        resetEncoders();
         setTicks();
 
         setTargets(target, -1, -1, 1, 1);
 
         double angleAdjuster;
         double multiplier = 1;
-        while(((lfTicks > lfTarget) || (lbTicks > lbTarget) || (rfTicks < rfTarget) || (rbTicks < rbTarget))) {
+        runtime.reset();
+        while(runtime.milliseconds() < 3000 && ((lfTicks > lfTarget) || (lbTicks > lbTarget) || (rfTicks < rfTarget) || (rbTicks < rbTarget))) {
             setTicks();
 
             leftMotorFront.setPower(-power * multiplier);
@@ -254,13 +369,15 @@ public class Move extends LinearOpMode {
         stopMotors();
     }
     public void turnRight(int target, double power) {
+        resetEncoders();
         setTicks();
 
         setTargets(target, .91, .91, -.91, -.91);
 
         double angleAdjuster;
         double multiplier = 1;
-        while(((lfTicks < lfTarget) || (lbTicks < lbTarget) || (rfTicks > rfTarget) || (rbTicks > rbTarget))) {
+        runtime.reset();
+        while(runtime.milliseconds() < 3000 && ((lfTicks < lfTarget) || (lbTicks < lbTarget) || (rfTicks > rfTarget) || (rbTicks > rbTarget))) {
             setTicks();
 
             leftMotorFront.setPower(power * multiplier);
@@ -271,13 +388,15 @@ public class Move extends LinearOpMode {
         stopMotors();
     }
     public void strafeLeft(int target, double power) {
+        resetEncoders();
         setTicks();
 
         setTargets(target, -1, 1, 1, -1);
 
         double angleAdjuster;
         double multiplier = 1;
-        while(((lfTicks > lfTarget) && (lbTicks < lbTarget) && (rfTicks < rfTarget) && (rbTicks > rbTarget))) {
+        runtime.reset();
+        while(runtime.milliseconds() < 3000 && ((lfTicks > lfTarget) && (lbTicks < lbTarget) && (rfTicks < rfTarget) && (rbTicks > rbTarget))) {
             setTicks();
 
             leftMotorFront.setPower(-power * multiplier);
@@ -288,13 +407,15 @@ public class Move extends LinearOpMode {
         stopMotors();
     }
     public void strafeRight(int target, double power) {
+        resetEncoders();
         setTicks();
 
         setTargets(target, 1, -1, -1, 1);
 
         double angleAdjuster;
         double multiplier = 1;
-        while((lfTicks < lfTarget) && (lbTicks > lbTarget) && (rfTicks > rfTarget) && (rbTicks < rbTarget)) {
+        runtime.reset();
+        while(runtime.milliseconds() < 3000 && ((lfTicks < lfTarget) && (lbTicks > lbTarget) && (rfTicks > rfTarget) && (rbTicks < rbTarget))) {
             setTicks();
 
             leftMotorFront.setPower(power * multiplier);
