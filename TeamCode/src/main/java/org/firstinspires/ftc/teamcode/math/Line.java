@@ -1,7 +1,7 @@
 /* This class can be used to draw a line between two points
-* Note that it functions a bit like a vector in that it is directional
-* since it has a startpoint and an endpoint. Also, technically a line
-* segment because it's not infinite.*/
+ * Note that it functions a bit like a vector in that it is directional
+ * since it has a startpoint and an endpoint. Also, technically a line
+ * segment because it's not infinite.*/
 
 package org.firstinspires.ftc.teamcode.math;
 
