@@ -43,11 +43,14 @@ public class Gyro extends LinearOpMode {
     }
 
     public double getAngle() {
-        heading = 0;
+        heading = 500;
         runtime.reset();
-        while (runtime.milliseconds() < 1500 && heading == 0) {
+        while (runtime.milliseconds() < 1500 && heading == 500) {
             angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
             heading = formatAngle(angles.angleUnit, angles.firstAngle);
+        }
+        if (heading < 0) {
+            heading += 360;
         }
         return heading;
     }
