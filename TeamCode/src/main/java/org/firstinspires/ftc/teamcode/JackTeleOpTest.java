@@ -10,22 +10,22 @@ import org.firstinspires.ftc.teamcode.math.Point;
 
 public class JackTeleOpTest extends OpMode{
     private MecanumDrive drive;
-
+    
     @Override
     public void init() {
         drive = new MecanumDrive(hardwareMap, "lmf", "rmf", "lmb", "rmb");
-
+        
         drive.resetPowerValues();
-
+        
         telemetry.addData("lmf power", drive.getFrontLeftMotorPower());
         telemetry.addData("rmf power", drive.getFrontRightMotorPower());
         telemetry.addData("lmb power", drive.getBackLeftMotorPower());
         telemetry.addData("rmb power", drive.getBackRightMotorPower());
-
+        
         telemetry.addData("All booted up and ready to go!", null);
         telemetry.update();
     }
-
+    
     @Override
     public void loop() {
         drive.resetPowerValues();
@@ -37,7 +37,7 @@ public class JackTeleOpTest extends OpMode{
         telemetry.addData("lmb power", drive.getBackLeftMotorPower());
         telemetry.addData("rmb power", drive.getBackRightMotorPower());
     }
-
+    
     private void cheat(double x, double y) {
         if (x == 0 && y == 0) {
             return;
@@ -46,7 +46,7 @@ public class JackTeleOpTest extends OpMode{
         double power = Math.sqrt(x*x + y*y);
         drive.linearMove(direction, power);
     }
-
+    
     @Override
     public void stop() {
         drive.stop();

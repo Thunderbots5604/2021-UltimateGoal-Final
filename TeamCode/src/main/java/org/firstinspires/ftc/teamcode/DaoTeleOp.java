@@ -5,8 +5,8 @@ Right stick controls turning
 A toggles ring grabber
 B is unallocated
 X toggles the wobble lock
-Y toggles the wobble arm
-Left bumper moves the lift up
+Y toggles the wobble arm 
+Left bumper moves the lift up 
 Right bumper moves the lift down
 Back button slows the speed of the lift
 Left trigger halves the speed of the movement
@@ -40,7 +40,7 @@ public class DaoTeleOp extends OpMode {
     private Servo WobbleLocker;
     private Servo WobbleArm;
     private Servo RingArm;
-
+    
     private ColorSensor frontColor;
     private ColorSensor backColor;
 
@@ -50,7 +50,7 @@ public class DaoTeleOp extends OpMode {
     private double leftTrigger = 0;
     private double rightTrigger = 0;
     private double quarterSpeed = multiplier * 0.25;
-
+    
     private boolean reverse = false;
     private boolean ring = false;
     private boolean pastX = false;
@@ -64,28 +64,28 @@ public class DaoTeleOp extends OpMode {
     private boolean engageLock = false;
     private boolean engageRing = false;
     private boolean halfSpeed = false;
-
+    
     private MecanumDrive drive;
-
+    
     @Override
     public void init() {
         //Get Hardware Map
         drive = new MecanumDrive(hardwareMap, "lmf", "rmf", "lmb", "rmb");
-
+        
         drive.resetPowerValues();
-
+        
         telemetry.addData("lmf power", drive.getFrontLeftMotorPower());
         telemetry.addData("rmf power", drive.getFrontRightMotorPower());
         telemetry.addData("lmb power", drive.getBackLeftMotorPower());
         telemetry.addData("rmb power", drive.getBackRightMotorPower());
-
+        
         liftL = hardwareMap.get(DcMotor.class, "LiftMechL");
         liftR = hardwareMap.get(DcMotor.class, "LiftMechR");
 
         WobbleLocker = hardwareMap.get(Servo.class, "WobbleLocker" );
         RingArm = hardwareMap.get(Servo.class, "RingGrabber");
         WobbleArm = hardwareMap.get(Servo.class, "WobbleArm");
-
+        
         frontColor = hardwareMap.get(ColorSensor.class, "fc");
         backColor = hardwareMap.get(ColorSensor.class, "bc");
 
@@ -94,7 +94,7 @@ public class DaoTeleOp extends OpMode {
 
         liftL.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         liftR.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
+        
         //Set Gamepad Deadzone
         gamepad1.setJoystickDeadzone(0.05f);
 
@@ -112,7 +112,7 @@ public class DaoTeleOp extends OpMode {
         telemetry.addData("rmf power", drive.getFrontRightMotorPower());
         telemetry.addData("lmb power", drive.getBackLeftMotorPower());
         telemetry.addData("rmb power", drive.getBackRightMotorPower());
-
+        
         //WobbleLocker
         if(!pastX && gamepad1.x){
             engageLock = !engageLock;
@@ -161,9 +161,9 @@ public class DaoTeleOp extends OpMode {
             }
         }
         pastY = gamepad1.y;
-
+        
         //Ring Grabbing Toggle
-        if(gamepad1.a && !secondA){
+         if(gamepad1.a && !secondA){
             ring = !ring;
             if(ring){
                 RingArm.setPosition(1);

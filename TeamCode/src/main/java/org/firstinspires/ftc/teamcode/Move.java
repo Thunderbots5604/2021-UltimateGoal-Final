@@ -137,7 +137,7 @@ public class Move extends LinearOpMode {
             move((int) (tileLength * 3.7), power + .05, "forward");
         }
         sleep(500);
-
+        
         if (zone != 2) {
             move(tileLength / 2, power, "backward");
             move(tileLength, power, "strafe right");
@@ -148,7 +148,7 @@ public class Move extends LinearOpMode {
             move(tileLength / 2, power, "backward");
             move(0, power, "gyro turn");
         }
-
+        
         parkToWhite(hardwareMap, false);
     }
     public void parkToWhite(HardwareMap hardwaremap, boolean direction) {

@@ -148,7 +148,7 @@ public class MecanumDrive {
         double maxValue = 1;
         //scale the powers to the maximum if one of them is greater than one
         if (frontLeftMotorPower > 1 || frontRightMotorPower > 1 ||
-                backLeftMotorPower > 1 || backRightMotorPower > 1) {
+            backLeftMotorPower > 1 || backRightMotorPower > 1) {
             //take the max of all of their absolute values
             maxValue = Math.max(Math.max(Math.abs(frontLeftMotorPower), Math.abs(frontRightMotorPower)),
                     Math.max(Math.abs(backLeftMotorPower), Math.abs(backRightMotorPower)));

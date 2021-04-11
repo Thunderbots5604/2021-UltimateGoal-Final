@@ -30,7 +30,7 @@ public class Others extends LinearOpMode {
     private Servo WobbleLocker;
     private Servo WobbleArm;
     private Servo RingArm;
-
+    
     private ColorSensor frontColor;
     private ColorSensor backColor;
 
@@ -54,10 +54,10 @@ public class Others extends LinearOpMode {
         WobbleLocker = hardwareMap.get(Servo.class, "WobbleLocker");
         RingArm = hardwareMap.get(Servo.class, "RingGrabber");
         WobbleArm = hardwareMap.get(Servo.class, "WobbleArm");
-
+        
         frontColor = hardwareMap.get(ColorSensor.class, "fc");
         backColor = hardwareMap.get(ColorSensor.class, "bc");
-
+    
     }
     public void lift() {
 
@@ -70,13 +70,13 @@ public class Others extends LinearOpMode {
         RingArm.setPosition(0);
     }
     public void fireRing() {
-
+        
     }
     public void getRing(){
-
+        
     }
     public void ringLG() {
-
+        
     }
     public int[] getReading(ColorSensor colorsensor) {
         //outputs red, green, blue, luminosity, hue
