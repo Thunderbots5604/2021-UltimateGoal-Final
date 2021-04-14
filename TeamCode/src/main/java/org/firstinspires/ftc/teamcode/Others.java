@@ -26,11 +26,14 @@ public class Others extends LinearOpMode {
     private DcMotor LiftL = null;
     private DcMotor LiftR = null;
 
+
+    public Gyro gyro = new Gyro();
     //Declare Servos
     private Servo WobbleLocker;
     private Servo WobbleArm;
     private Servo RingArm;
-    
+    private Servo camPlatform;
+
     private ColorSensor frontColor;
     private ColorSensor backColor;
 
@@ -54,10 +57,10 @@ public class Others extends LinearOpMode {
         WobbleLocker = hardwareMap.get(Servo.class, "WobbleLocker");
         RingArm = hardwareMap.get(Servo.class, "RingGrabber");
         WobbleArm = hardwareMap.get(Servo.class, "WobbleArm");
-        
+        //camPlatform = hardwareMap.get(Servo.class, "camplat");
+
         frontColor = hardwareMap.get(ColorSensor.class, "fc");
         backColor = hardwareMap.get(ColorSensor.class, "bc");
-    
     }
     public void lift() {
 
@@ -70,14 +73,18 @@ public class Others extends LinearOpMode {
         RingArm.setPosition(0);
     }
     public void fireRing() {
-        
+
     }
     public void getRing(){
-        
+
     }
     public void ringLG() {
-        
+
     }
+    /*  public static double trueAngle(){
+
+      return gyro.getAngle();
+      }*/
     public int[] getReading(ColorSensor colorsensor) {
         //outputs red, green, blue, luminosity, hue
         int[] reading = new int[5];
@@ -98,6 +105,15 @@ public class Others extends LinearOpMode {
             telemetry.addData("L ", reading[3]);
             telemetry.addData("A ", reading[4]);
             telemetry.update();
+        }
+    }
+    public void rotateCamPlatform(double angle) {
+        camPlatform.setPosition(angle + camPlatform.getPosition());
+        if (camPlatform.getPosition() == 0) {
+            Cam.rotated = false;
+        }
+        else {
+            Cam.rotated = true;
         }
     }
 }

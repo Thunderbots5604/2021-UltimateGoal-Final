@@ -40,7 +40,7 @@ public class DaoTeleOp extends OpMode {
     private Servo WobbleLocker;
     private Servo WobbleArm;
     private Servo RingArm;
-    
+
     private ColorSensor frontColor;
     private ColorSensor backColor;
 
@@ -50,7 +50,7 @@ public class DaoTeleOp extends OpMode {
     private double leftTrigger = 0;
     private double rightTrigger = 0;
     private double quarterSpeed = multiplier * 0.25;
-    
+
     private boolean reverse = false;
     private boolean ring = false;
     private boolean pastX = false;
@@ -64,28 +64,28 @@ public class DaoTeleOp extends OpMode {
     private boolean engageLock = false;
     private boolean engageRing = false;
     private boolean halfSpeed = false;
-    
+
     private MecanumDrive drive;
-    
+
     @Override
     public void init() {
         //Get Hardware Map
         drive = new MecanumDrive(hardwareMap, "lmf", "rmf", "lmb", "rmb");
-        
+
         drive.resetPowerValues();
-        
+
         telemetry.addData("lmf power", drive.getFrontLeftMotorPower());
         telemetry.addData("rmf power", drive.getFrontRightMotorPower());
         telemetry.addData("lmb power", drive.getBackLeftMotorPower());
         telemetry.addData("rmb power", drive.getBackRightMotorPower());
-        
+
         liftL = hardwareMap.get(DcMotor.class, "LiftMechL");
         liftR = hardwareMap.get(DcMotor.class, "LiftMechR");
 
         WobbleLocker = hardwareMap.get(Servo.class, "WobbleLocker" );
         RingArm = hardwareMap.get(Servo.class, "RingGrabber");
         WobbleArm = hardwareMap.get(Servo.class, "WobbleArm");
-        
+
         frontColor = hardwareMap.get(ColorSensor.class, "fc");
         backColor = hardwareMap.get(ColorSensor.class, "bc");
 
@@ -94,25 +94,26 @@ public class DaoTeleOp extends OpMode {
 
         liftL.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         liftR.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        
+
         //Set Gamepad Deadzone
         gamepad1.setJoystickDeadzone(0.05f);
 
-        telemetry.addData("Status", "Initialized");
-        telemetry.update();
+        Cam cam = new Cam(telemetry, hardwareMap);
+        Move move = new Move(telemetry);
+        Others motors = new Others(telemetry);
+
+        move.initialize(hardwareMap);
+        motors.initMotors(hardwareMap);
+        cam.initVuforia(hardwareMap);
     }
 
     @Override
     public void loop() {
         drive.resetPowerValues();
         cheat(gamepad1.left_stick_x, gamepad1.left_stick_y);
-        drive.radialMove(gamepad1.right_stick_x * multiplier * 0.25);
+        drive.radialMove(gamepad1.right_stick_x * multiplier * 0.5);
         drive.updateMotorPowers();
-        telemetry.addData("lmf power", drive.getFrontLeftMotorPower());
-        telemetry.addData("rmf power", drive.getFrontRightMotorPower());
-        telemetry.addData("lmb power", drive.getBackLeftMotorPower());
-        telemetry.addData("rmb power", drive.getBackRightMotorPower());
-        
+
         //WobbleLocker
         if(!pastX && gamepad1.x){
             engageLock = !engageLock;
@@ -161,9 +162,9 @@ public class DaoTeleOp extends OpMode {
             }
         }
         pastY = gamepad1.y;
-        
+
         //Ring Grabbing Toggle
-         if(gamepad1.a && !secondA){
+        if(gamepad1.a && !secondA){
             ring = !ring;
             if(ring){
                 RingArm.setPosition(1);
@@ -173,11 +174,6 @@ public class DaoTeleOp extends OpMode {
             }
         }
         secondA = gamepad1.a;
-        telemetry.addData("Swap mode = ", String.valueOf(gamepad1.back));
-        telemetry.addData("LiftMech = ", liftL.getCurrentPosition());
-        telemetry.addData("Arm Servo = ", WobbleArm.getPosition());
-        telemetry.addData("Ring Arm = ", ring);
-        telemetry.addData("WobbleLocker", engageLock);
         telemetry.update();
     }
     private void cheat(double x, double y) {

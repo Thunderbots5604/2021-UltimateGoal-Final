@@ -25,7 +25,7 @@ public class GoodTeleOp extends OpMode {
     private Servo WobbleLocker;
     private Servo WobbleArm;
     private Servo RingArm;
-    
+
     private ColorSensor frontColor;
     private ColorSensor backColor;
 
@@ -35,7 +35,7 @@ public class GoodTeleOp extends OpMode {
     private double leftTrigger = 0;
     private double rightTrigger = 0;
     private double quarterSpeed = multiplier * 0.25;
-    
+
     private boolean reverse = false;
     private boolean ring = false;
     private boolean pastX = false;
@@ -51,8 +51,8 @@ public class GoodTeleOp extends OpMode {
     private boolean swap = false;
     private boolean engageRing = false;
     private boolean halfSpeed = false;
-    
-    
+
+
 
 
     @Override
@@ -69,7 +69,7 @@ public class GoodTeleOp extends OpMode {
         WobbleLocker = hardwareMap.get(Servo.class, "WobbleLocker" );
         RingArm = hardwareMap.get(Servo.class, "RingGrabber");
         WobbleArm = hardwareMap.get(Servo.class, "WobbleArm");
-        
+
         frontColor = hardwareMap.get(ColorSensor.class, "fc");
         backColor = hardwareMap.get(ColorSensor.class, "bc");
 
@@ -77,33 +77,33 @@ public class GoodTeleOp extends OpMode {
         flMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         blMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         liftL.setDirection(DcMotorSimple.Direction.REVERSE);
-        
+
         liftL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         liftR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         liftL.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         liftR.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        
-        
-        
+
+
+
         //Set Gamepad Deadzone
         gamepad1.setJoystickDeadzone(0.05f);
 
         telemetry.addData("Status", "Initialized");
         telemetry.update();
     }
-    
+
     public void start(){
         RingArm.setPosition(0.6);
-        
+
     }
 
     @Override
     public void loop() {
         leftTrigger = gamepad2.left_trigger;
         rightTrigger = gamepad2.right_trigger;
-        
-        
+
+
         if (gamepad1.left_stick_y != 0 || gamepad1.left_stick_x != 0) {
             //FR BL pair
             powerFRBL = (gamepad1.left_stick_x + gamepad1.left_stick_y) / Math.sqrt(2);
@@ -122,8 +122,8 @@ public class GoodTeleOp extends OpMode {
             brMotor.setPower(Math.abs(multiplier) * gamepad1.right_stick_x * .7);
             telemetry.addData("Right stick", gamepad1.right_stick_x);
         }
-      //Second Drive at Quarter Speed
-       else if (gamepad2.left_stick_y != 0 || gamepad2.left_stick_x != 0) {
+        //Second Drive at Quarter Speed
+        else if (gamepad2.left_stick_y != 0 || gamepad2.left_stick_x != 0) {
             //FR BL pair
             powerFRBL = (gamepad2.left_stick_x + gamepad2.left_stick_y) / Math.sqrt(2);
             blMotor.setPower(multiplier * powerFRBL * quarterSpeed);
@@ -147,7 +147,7 @@ public class GoodTeleOp extends OpMode {
             blMotor.setPower(0);
             brMotor.setPower(0);
         }
-        
+
         //Reverse Toggle
         if(!pastX && gamepad1.x){
             reverse = !reverse;
@@ -159,9 +159,9 @@ public class GoodTeleOp extends OpMode {
         if(leftTrigger > 0 && ((liftL.getCurrentPosition() < -2 || liftR.getCurrentPosition() < -2) || gamepad2.right_bumper)){
             liftL.setPower(leftTrigger / 2);
             liftR.setPower(leftTrigger / 2);
-            
+
         }
-         else if(rightTrigger > 0){
+        else if(rightTrigger > 0){
             liftL.setPower(-rightTrigger / 2);
             liftR.setPower(-rightTrigger / 2);
         }
@@ -169,50 +169,50 @@ public class GoodTeleOp extends OpMode {
             liftL.setPower(0);
             liftR.setPower(0);
         }
-        
+
         //Halfspeed Toggle
         if(gamepad1.a == false && pastA == true){
             halfSpeed = !halfSpeed;
             if(halfSpeed == true){
                 multiplier *= 0.5;
-                
+
             }
             else{
                 multiplier *= 2;
             }
         }
         pastA = gamepad1.a;
-       
-        
+
+
         //Wobble Locker Toggle
         if(gamepad2.x && !secondX){
             engageLock = !engageLock;
             if(engageLock){
                 WobbleLocker.setPosition(0.4);
-                
+
             }
             else{
                 WobbleLocker.setPosition(0.5);
             }
         }
         secondX = gamepad2.x;
-        
+
         //Wobble Arm Toggle
         if(gamepad2.y && !pastY){
             engageArm = !engageArm;
             if(engageArm){
                 WobbleArm.setPosition(0.9);
                 WobbleLocker.setPosition(0.5);
-                
+
             }
             else{
                 WobbleArm.setPosition(0);
             }
         }
         pastY = gamepad2.y;
-        
+
         //Ring Grabbing Toggle
-         if(gamepad2.a && !secondA){
+        if(gamepad2.a && !secondA){
             ring = !ring;
             if(ring){
                 RingArm.setPosition(0.9);
@@ -222,7 +222,7 @@ public class GoodTeleOp extends OpMode {
             }
         }
         secondA = gamepad2.a;
-        
+
         //Ring Arm all the way up
         if(gamepad2.b && !secondB){
             ring = !ring;
@@ -234,7 +234,7 @@ public class GoodTeleOp extends OpMode {
             }
         }
         secondB = gamepad2.b;
-        
+
 
         if(gamepad2.back) {
             flMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -249,8 +249,8 @@ public class GoodTeleOp extends OpMode {
             liftR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
             liftL.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             liftR.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            }
-        
+        }
+
         telemetry.addData("Swap mode: ", swap);
         telemetry.addData("Front Right Motor = ", frMotor.getCurrentPosition());
         telemetry.addData("Front Left Motor = ", flMotor.getCurrentPosition());

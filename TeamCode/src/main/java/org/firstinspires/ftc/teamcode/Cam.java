@@ -36,6 +36,7 @@ import static org.firstinspires.ftc.robotcore.external.navigation.AxesOrder.XZY;
 import static org.firstinspires.ftc.robotcore.external.navigation.AxesReference.EXTRINSIC;
 
 @Autonomous(name = "Cam", group = "TensorFlow")
+@Disabled
 public class Cam extends LinearOpMode {
     private static final String TFOD_MODEL_ASSET = "UltimateGoal.tflite";
     private static final String LABEL_FIRST_ELEMENT = "Quad";
@@ -50,11 +51,9 @@ public class Cam extends LinearOpMode {
     private float phoneYRotate = 0;
     private float phoneZRotate = 0;
 
-    final float CAMERA_FORWARD_DISPLACEMENT = 10.0f * mmPerInch;
-    final float CAMERA_VERTICAL_DISPLACEMENT = 4.0f * mmPerInch;
-    final float CAMERA_LEFT_DISPLACEMENT = 0;
-
-    private int scan = 0;
+    final float CAMERA_FORWARD_DISPLACEMENT = -5.0f * mmPerInch;
+    final float CAMERA_VERTICAL_DISPLACEMENT = 11.5f * mmPerInch;
+    final float CAMERA_LEFT_DISPLACEMENT = -1f * mmPerInch;
 
     //Put in the Vuforia Key
     private static String VUFORIA_KEY = "Aev2uJj/////AAABmXZLlevRVUibu3ft/8eoZ+p3zmNO/qYTRunRCIvDriYoZlMUcvJWFcEhvD1bCA6j/KWPlsVQyzCyh983kmfZN03G5bBJXhDh4fSgT4yyHL4PScYi5aG1UaxLa38X2vqzrbx9jpUqE3ESk6wYg8enXTPzp8R6+0SnrFoRLa7yobzCbBIfzAIpsGO33F9PVbXV+zsf0jqg0KA9OG24I6WkLZll0YPy1fDkR1okXL4pv2pm7eiKaZa2EXIYE/lGfkOAO42vxFMO8rAqA46/YeX/QPPTrCow0dE81FGSS6Wp9v3z45lqQ/kg+0TnSDkOJFrGKUYD1v6zTkfJLhF6DDAuW1TwPcdof0349IOncpuCpcz9";
@@ -67,13 +66,14 @@ public class Cam extends LinearOpMode {
     private ElapsedTime runTime = new ElapsedTime();
     private Gyro gyro = new Gyro();
 
-    private double[] coordinates = null;
     private OpenGLMatrix lastLocation = null;
     private List<VuforiaTrackable> allTrackables = new ArrayList<VuforiaTrackable>();
 
     private Telemetry telemetry;
     private HardwareMap hardwareMap;
     private WebcamName webcamName;
+
+    public static boolean rotated = false;
 
     public Cam(Telemetry telemetry, HardwareMap hardwareMap) {
         this.telemetry = telemetry;
@@ -171,10 +171,9 @@ public class Cam extends LinearOpMode {
         }
         return ringCount;
     }
-    public double[] getCoords() {
+    public void getCoords() {
         double x = 0;
         double y = 0;
-        double z = 0;
         double angle = 0;
         targetVisible = false;
         VectorF translation = null;
@@ -204,20 +203,25 @@ public class Cam extends LinearOpMode {
                     translation.get(0) / mmPerInch, translation.get(1) / mmPerInch, translation.get(2) / mmPerInch);
             x = translation.get(0) / mmPerInch;
             y = translation.get(1) / mmPerInch;
-            z = translation.get(2) / mmPerInch;
 
             // express the rotation of the robot in degrees.
             Orientation rotation = Orientation.getOrientation(lastLocation, EXTRINSIC, XYZ, DEGREES);
             telemetry.addData("Rot (deg)", "{Roll, Pitch, Heading} = %.0f, %.0f, %.0f", rotation.firstAngle, rotation.secondAngle, rotation.thirdAngle);
-            angle = rotation.thirdAngle;
-            if (angle < 0) {
-                angle += 360;
+            if (rotated) {
+                angle = gyro.getAngle();
             }
+            else {
+                angle = rotation.thirdAngle + 5;
+                if (angle < 0) {
+                    angle += 360;
+                }
+            }
+            Values.currentCoords[0] = x;
+            Values.currentCoords[1] = y;
+            Values.currentCoords[2] = angle;
+            return;
         }
-        else {
-            angle = gyro.getAngle();
-        }
-        return new double[]{x, y, angle};
+        Values.currentCoords[2] = gyro.getAngle();
     }
     public int getZone() {
         String ringCount = tfod();

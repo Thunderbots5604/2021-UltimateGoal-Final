@@ -12,6 +12,7 @@ public class Test extends LinearOpMode {
     Cam cam = new Cam(telemetry, hardwareMap);
     Move move = new Move(telemetry);
     Others motors = new Others(telemetry);
+    Gyro gyro = new Gyro();
 
     int halfOfField = Values.halfOfField;
     int tileLength = Values.tileLength;
@@ -23,14 +24,16 @@ public class Test extends LinearOpMode {
         move.initialize(hardwareMap);
         motors.initMotors(hardwareMap);
         cam.initVuforia(hardwareMap);
-        cam.startCam();
+        gyro.initGyro(hardwareMap);
+        //cam.startCam();
         waitForStart();
         while(opModeIsActive()) {
-            coords = cam.getCoords();
+            cam.getCoords();
             telemetry.addData("x: ", coords[0]);
             telemetry.addData("y: ", coords[1]);
-            telemetry.addData("angle: ", coords[2]);
+            telemetry.addData("Angle: ", coords[2]);
             telemetry.update();
         }
+        //cam.endCam();
     }
 }
