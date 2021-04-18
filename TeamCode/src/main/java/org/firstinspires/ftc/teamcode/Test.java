@@ -27,6 +27,12 @@ public class Test extends LinearOpMode {
         gyro.initGyro(hardwareMap);
         //cam.startCam();
         waitForStart();
+        cam.getCoords();
+        telemetry.addData("x: ", coords[0]);
+        telemetry.addData("y: ", coords[1]);
+        telemetry.addData("Angle: ", coords[2]);
+        telemetry.update();
+        move.move(1000, power, "strafe right");
         while(opModeIsActive()) {
             cam.getCoords();
             telemetry.addData("x: ", coords[0]);

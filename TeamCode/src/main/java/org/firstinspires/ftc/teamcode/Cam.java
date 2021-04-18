@@ -197,13 +197,10 @@ public class Cam extends LinearOpMode {
         if (lastLocation != null) {
             translation = lastLocation.getTranslation();
         }
+
         if (targetVisible) {
-            // express position (translation) of robot in inches.
-            telemetry.addData("Pos (in)", "{X, Y, Z} = %.1f, %.1f, %.1f",
-                    translation.get(0) / mmPerInch, translation.get(1) / mmPerInch, translation.get(2) / mmPerInch);
             x = translation.get(0) / mmPerInch;
             y = translation.get(1) / mmPerInch;
-
             // express the rotation of the robot in degrees.
             Orientation rotation = Orientation.getOrientation(lastLocation, EXTRINSIC, XYZ, DEGREES);
             telemetry.addData("Rot (deg)", "{Roll, Pitch, Heading} = %.0f, %.0f, %.0f", rotation.firstAngle, rotation.secondAngle, rotation.thirdAngle);
@@ -222,6 +219,7 @@ public class Cam extends LinearOpMode {
             return;
         }
         Values.currentCoords[2] = gyro.getAngle();
+
     }
     public int getZone() {
         String ringCount = tfod();

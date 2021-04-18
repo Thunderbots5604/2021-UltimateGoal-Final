@@ -15,7 +15,7 @@ public class Park extends LinearOpMode {
     public void runOpMode() throws InterruptedException {
         move.initialize(hardwareMap);
         waitForStart();
-        move.move(1000, .4, "strafe left");
-        move.move(2000, 0.5, "forward");
+        move.move(1000, .3, "strafe left");
+        move.move(2000, .3, "forward");
     }
 }

@@ -107,7 +107,7 @@ public class MecanumDrive {
     public MecanumDrive(HardwareMap map, String frontLeftDrive, String frontRightDrive,
                         String backLeftDrive, String backRightDrive) {
         this(map, frontLeftDrive, frontRightDrive, backLeftDrive,
-                backRightDrive, 1, 1, 1, 1, 1, 1, 1 / (double) Values.ticksPerDegree, 1, 1);
+                backRightDrive, 1, 1, 1, 1, 1, 1, 1 / (double) Values.ticksPerDegree, 10, 10);
     }
 
     //include some default strings for lovable dummies that aren't gonna want to type
@@ -170,10 +170,10 @@ public class MecanumDrive {
         //finish scaling the vector
         scaledDirection.scale(power);
         //set the powers - y - x for front left and back right, y + x for front right and back left
-        frontLeftMotorPower += (scaledDirection.getY() - scaledDirection.getX() / maxValue);
-        backRightMotorPower += (scaledDirection.getY() - scaledDirection.getX() / maxValue);
-        frontRightMotorPower += (scaledDirection.getY() + scaledDirection.getX() / maxValue);
-        backLeftMotorPower += (scaledDirection.getY() + scaledDirection.getX() / maxValue);
+        frontLeftMotorPower += ((scaledDirection.getY() - scaledDirection.getX()) / maxValue);
+        backRightMotorPower += ((scaledDirection.getY() - scaledDirection.getX()) / maxValue);
+        frontRightMotorPower += ((scaledDirection.getY() + scaledDirection.getX()) / maxValue);
+        backLeftMotorPower += ((scaledDirection.getY() + scaledDirection.getX()) / maxValue);
     }
 
     //radial motion used for turning only takes power as a variable since it's designed for point turns
@@ -261,7 +261,7 @@ public class MecanumDrive {
             updateMotorPowers();
             //finally, we need to update the position
             updateTicks();
-            newStartRobotPosition = newStartRobotPosition.minus(new RobotPosition(calculateChangeInLocation().rotateAboutOrigin(calculateChangeInAngle()), calculateChangeInAngle()));
+            newStartRobotPosition = newStartRobotPosition.plus(new RobotPosition(calculateChangeInLocation().rotateAboutOrigin(calculateChangeInAngle()), calculateChangeInAngle()));
             //for testing - update the telemetry with a count of how many times it has run
             count++;
             REMOVELATER.addData("Current Location X", newStartRobotPosition.getLocation().getX());
@@ -302,7 +302,7 @@ public class MecanumDrive {
             //update motor powers
             updateMotorPowers();
             //calculate the positions again
-            newStartRobotPosition = newStartRobotPosition.plus(new RobotPosition(calculateChangeInLocation().rotateAboutOrigin(newStartRobotPosition.getAngle()), calculateChangeInAngle()));
+            newStartRobotPosition = newStartRobotPosition.minus(new RobotPosition(/*calculateChangeInLocation().rotateAboutOrigin(newStartRobotPosition.getAngle())*/Point.origin(), calculateChangeInAngle()));
             //update the ticks
             updateTicks();
             //current position
@@ -313,7 +313,7 @@ public class MecanumDrive {
         }
         stop();
         //next, we need to do linear motion
-        ///*
+
         while(!newStartRobotPosition.getLocation().equalsRange(newEndRobotPosition.getLocation(), LINEAR_RANGE)) {
             //reset the motor powers
             resetPowerValues();
@@ -323,7 +323,7 @@ public class MecanumDrive {
             //update motor powers
             updateMotorPowers();
             //calculate the positions again
-            newStartRobotPosition = newStartRobotPosition.plus(new RobotPosition(calculateChangeInLocation().rotateAboutOrigin(newStartRobotPosition.getAngle()), calculateChangeInAngle()));
+            newStartRobotPosition = newStartRobotPosition.minus(new RobotPosition(calculateChangeInLocation().rotateAboutOrigin(newStartRobotPosition.getAngle()), 0));
             //update the ticks
             updateTicks();
             //current position
@@ -332,7 +332,117 @@ public class MecanumDrive {
             REMOVELATER.addData("Y Position", newStartRobotPosition.getLocation().getY());
             REMOVELATER.update();
         }
-        //*/
+
+        stop();
+        return newStartRobotPosition;
+    }
+
+    //methods that involve other methods
+    //moveOn is used to move along a specific line and from one angle to another
+    public void test(RobotPosition startRobotPosition, RobotPosition endRobotPosition, double power, Telemetry REMOVELATER) {
+        //for testing only
+        int count = 0;
+        //we need to generate a new end position and start position, where we start at (0,0) with
+        //angle = 0 and determine what the same relative end position would be
+        RobotPosition newStartRobotPosition = RobotPosition.zero();
+        //find the new end position
+        RobotPosition newEndRobotPosition = endRobotPosition.minus(startRobotPosition);
+        //difference in angles
+        double angleDifference = newEndRobotPosition.getAngle();
+        //now we need to route from the zero position to the end position
+        while (!newStartRobotPosition.equalsRange(newEndRobotPosition, LINEAR_RANGE, ANGLE_RANGE)) {
+            //reset motor powers to start
+            resetPowerValues();
+            //determine the details about the angle
+            if (!MathUtilities.within(ANGLE_RANGE, newStartRobotPosition.getAngle(), newEndRobotPosition.getAngle())) {
+                //if the angles aren't close enough to be the same
+                //here we branch into two: turning right vs turning left
+                //first, make sure that the difference in angles is between -180 and 180
+                REMOVELATER.addData("angles aren't the same", null);
+                if (Math.abs(angleDifference) > 180) {
+                    angleDifference -= Math.copySign(360, angleDifference);
+                    REMOVELATER.addData("angle diff is greater than 180", null);
+                }
+                //now, we move left or right to try to match to the angle
+                radialMove(Math.copySign(power, angleDifference));
+            }
+            //next, we need to determine the details about the linear motion
+            if(!newStartRobotPosition.getLocation().equalsRange(newEndRobotPosition.getLocation(), LINEAR_RANGE)) {
+                //just linear move on the end minus the start position
+                linearMove(newEndRobotPosition.getLocation().minus(newStartRobotPosition.getLocation()), power);
+                REMOVELATER.addData("location diff is real", null);
+            }
+            updateMotorPowers();
+            //finally, we need to update the position
+            updateTicks();
+            newStartRobotPosition = newStartRobotPosition.minus(new RobotPosition(calculateChangeInLocation(), calculateChangeInAngle()));
+            //for testing - update the telemetry with a count of how many times it has run
+            count++;
+            REMOVELATER.addData("Current Location X", newStartRobotPosition.getLocation().getX());
+            REMOVELATER.addData("Current Location Y", newStartRobotPosition.getLocation().getY());
+            REMOVELATER.addData("Angle", newStartRobotPosition.getAngle());
+            REMOVELATER.addData("count", count);
+            REMOVELATER.update();
+        }
+        stop();
+    }
+
+    public RobotPosition endMe(RobotPosition startRobotPosition, RobotPosition endRobotPosition, double power, Telemetry REMOVELATER) {
+        //for testing only
+        int count = 0;
+        //we need to generate a new end position and start position, where we start at (0,0) with
+        //angle = 0 and determine what the same relative end position would be
+        RobotPosition newStartRobotPosition = RobotPosition.zero();
+        //find the new end position
+        RobotPosition newEndRobotPosition = endRobotPosition.minus(startRobotPosition);
+        //difference in angles
+        updateTicks();
+        double angleDifference = newStartRobotPosition.getAngle();
+        while (!MathUtilities.within(ANGLE_RANGE, newStartRobotPosition.getAngle(), newEndRobotPosition.getAngle())) {
+            //if the angles aren't close enough to be the same
+            //reset motor powers to start
+            resetPowerValues();
+            //give some data to the telemetry
+            if (angleDifference > 0) {
+                REMOVELATER.addData("turning", "left");
+            }
+            else {
+                REMOVELATER.addData("turning", "right");
+            }
+            REMOVELATER.addData("angles aren't the same", null);
+            //now, we move left or right to try to match to the angle
+            radialMove(Math.copySign(power, angleDifference));
+            //update motor powers
+            updateMotorPowers();
+            //calculate the positions again
+            newStartRobotPosition = newStartRobotPosition.minus(new RobotPosition(Point.origin(), calculateChangeInAngle()));
+            //update the ticks
+            updateTicks();
+            //current position
+            REMOVELATER.addData("Angle", newStartRobotPosition.getAngle());
+            REMOVELATER.addData("X Position", newStartRobotPosition.getLocation().getX());
+            REMOVELATER.addData("Y Position", newStartRobotPosition.getLocation().getY());
+            REMOVELATER.update();
+        }
+        newEndRobotPosition = new RobotPosition(newEndRobotPosition.getLocation().rotateAboutOrigin(newEndRobotPosition.getAngle()), 0);
+        //now we need to route from the zero position to the end position
+        while (!newStartRobotPosition.getLocation().equalsRange(newEndRobotPosition.getLocation(), LINEAR_RANGE)) {
+            resetPowerValues();
+            //just linear move on the end minus the start position
+            linearMove(newEndRobotPosition.getLocation().minus(newStartRobotPosition.getLocation()), power);
+            REMOVELATER.addData("location diff is real", null);
+            updateMotorPowers();
+            //finally, we need to update the position
+            updateTicks();
+            newStartRobotPosition = newStartRobotPosition.minus(new RobotPosition(calculateChangeInLocation(), calculateChangeInAngle()));
+            //for testing - update the telemetry with a count of how many times it has run
+            count++;
+            REMOVELATER.addData("Current Location X", newStartRobotPosition.getLocation().getX());
+            REMOVELATER.addData("Current Location Y", newStartRobotPosition.getLocation().getY());
+            REMOVELATER.addData("Angle", newStartRobotPosition.getAngle());
+            REMOVELATER.addData("count", count);
+            REMOVELATER.update();
+        }
         stop();
         return newStartRobotPosition;
     }
@@ -360,9 +470,9 @@ public class MecanumDrive {
         y ~ (FR+BR)/2
          */
         //change in x
-        double changeInX = X_DISTANCE_PER_TICK * ((changeInTicksFR - changeInTicksFL) / 2);
+        double changeInX = X_DISTANCE_PER_TICK * -1 * ((changeInTicksFR - changeInTicksFL) / 2);
         //change in y
-        double changeInY = Y_DISTANCE_PER_TICK * ((changeInTicksFR + changeInTicksBR) / 2);
+        double changeInY = Y_DISTANCE_PER_TICK * -1 * ((changeInTicksFR + changeInTicksBR) / 2);
         return new Point(changeInX, changeInY);
     }
 
@@ -375,7 +485,7 @@ public class MecanumDrive {
         /* algebra says that correct motion will give
         turning ~ (FR-BL)/2
          */
-        return ANGLE_PER_TICK * (-(changeInTicksFR - changeInTicksBL) / 2);
+        return ANGLE_PER_TICK * (changeInTicksFR - changeInTicksBL) / 2;
 
     }
 

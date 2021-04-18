@@ -100,8 +100,9 @@ public class Point implements Cloneable{
 
     //rotate by a certain amount about the origin
     public Point rotateAboutOrigin(double degrees) {
-        double newX = this.getX() * Math.cos(degrees) - this.getY() * Math.sin(degrees);
-        double newY = this.getX() * Math.sin(degrees) + this.getY() * Math.cos(degrees);
+        double radians = Math.toRadians(degrees);
+        double newX = this.getX() * Math.cos(radians) - this.getY() * Math.sin(radians);
+        double newY = this.getX() * Math.sin(radians) + this.getY() * Math.cos(radians);
         return new Point(newX, newY);
     }
 

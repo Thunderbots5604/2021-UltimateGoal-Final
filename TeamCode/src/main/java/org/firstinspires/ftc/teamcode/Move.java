@@ -161,14 +161,12 @@ public class Move extends LinearOpMode {
     public void moveToTicks(double[] targets, double power) {
         resetEncoders();
         double max = Math.max(targets[0], targets[1]);max = Math.max(max, targets[2]); max = Math.max(max, targets[3]);
-        boolean finished = false;
         setPowers(power * (targets[0] / max), power * (targets[1] / max), power * (targets[2] / max), power * (targets[3] / max));
-        while (opModeIsActive() && !finished) {
+        while (true/*opModeIsActive()*/) {
             setTicks();
             for (int i = 0; i < motorTicks.length; i++) {
                 currentTicks[i] = Math.abs(motorTicks[i]);
-                if (currentTicks[i] > targets[i]) {
-                    finished = true;
+                if (currentTicks[i] > Math.abs(targets[i])) {
                     stopMotors();
                     break;
                 }
