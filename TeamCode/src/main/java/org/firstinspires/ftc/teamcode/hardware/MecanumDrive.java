@@ -313,7 +313,8 @@ public class MecanumDrive {
         }
         stop();
         //next, we need to do linear motion
-        /*while(!newStartRobotPosition.getLocation().equalsRange(newEndRobotPosition.getLocation(), LINEAR_RANGE)) {
+        ///*
+        while(!newStartRobotPosition.getLocation().equalsRange(newEndRobotPosition.getLocation(), LINEAR_RANGE)) {
             //reset the motor powers
             resetPowerValues();
             //just linear move on the end minus the start position
@@ -330,7 +331,8 @@ public class MecanumDrive {
             REMOVELATER.addData("X Position", newStartRobotPosition.getLocation().getX());
             REMOVELATER.addData("Y Position", newStartRobotPosition.getLocation().getY());
             REMOVELATER.update();
-        }*/
+        }
+        //*/
         stop();
         return newStartRobotPosition;
     }

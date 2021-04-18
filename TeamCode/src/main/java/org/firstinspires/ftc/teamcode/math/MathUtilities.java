@@ -46,7 +46,7 @@ public class MathUtilities {
     public static double angleDifference(double angle1, double angle2) {
         //get the actual difference
         double angleDifference = angle1 - angle2;
-        //checl if angle magnitude is greater than 360
+        //check if angle magnitude is greater than 360
         if (Math.abs(angleDifference) >= 360) {
             angleDifference %= 360;
         }
