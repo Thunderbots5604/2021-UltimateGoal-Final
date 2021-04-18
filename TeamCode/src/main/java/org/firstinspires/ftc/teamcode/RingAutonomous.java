@@ -35,7 +35,7 @@ public class RingAutonomous extends LinearOpMode {
         move.startToZone(zone);
 
         //Go back to corner
-        move.zoneToCorner(zone, true);
+        move.zoneToCorner(zone);
 
         //Go to next wobble and put it in zone
         move.secondWobble(zone);

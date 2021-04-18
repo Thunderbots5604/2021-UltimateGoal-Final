@@ -9,19 +9,37 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 @Autonomous(name="Test", group="")
 public class Test extends LinearOpMode {
 
-    Cam cam = new Cam(telemetry);
+    Cam cam = new Cam(telemetry, hardwareMap);
     Move move = new Move(telemetry);
+    Others motors = new Others(telemetry);
+    Gyro gyro = new Gyro();
 
     int halfOfField = Values.halfOfField;
     int tileLength = Values.tileLength;
     double power = Values.power;
+    double[] coords = {0, 0, 0};
 
     @Override
     public void runOpMode() {
         move.initialize(hardwareMap);
-
+        motors.initMotors(hardwareMap);
+        cam.initVuforia(hardwareMap);
+        gyro.initGyro(hardwareMap);
+        //cam.startCam();
         waitForStart();
-
-        move.move(halfOfField, power, "forward");
+        cam.getCoords();
+        telemetry.addData("x: ", coords[0]);
+        telemetry.addData("y: ", coords[1]);
+        telemetry.addData("Angle: ", coords[2]);
+        telemetry.update();
+        move.move(1000, power, "strafe right");
+        while(opModeIsActive()) {
+            cam.getCoords();
+            telemetry.addData("x: ", coords[0]);
+            telemetry.addData("y: ", coords[1]);
+            telemetry.addData("Angle: ", coords[2]);
+            telemetry.update();
+        }
+        //cam.endCam();
     }
 }

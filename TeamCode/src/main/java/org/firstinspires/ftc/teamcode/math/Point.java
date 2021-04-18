@@ -23,6 +23,11 @@ public class Point implements Cloneable{
         this(0,0);
     }
 
+    //get the origin as a point
+    public static Point origin() {
+        return new Point();
+    }
+
     //clone method
     @Override
     public Point clone() {
@@ -66,6 +71,19 @@ public class Point implements Cloneable{
         }
     }
 
+    //check for equality with a larger range
+    public boolean equalsRange(Point otherPoint, double range) {
+        //check each value individually
+        if (MathUtilities.within(range, this.getX(), otherPoint.getX())
+                && MathUtilities.within(range, this.getY(), otherPoint.getY())) {
+            return true;
+        }
+        //otherwise, false
+        else {
+            return false;
+        }
+    }
+
     //scalar multiplication
     public void scale(double scaleFactor) {
         this.setX(scaleFactor * this.getX());
@@ -77,7 +95,15 @@ public class Point implements Cloneable{
         Point unitVector = this.clone();
         //scale doesn't return the point, so this needs to be done separate form return statement
         unitVector.scale(1 / unitVector.distance());
-        return unitVector();
+        return unitVector;
+    }
+
+    //rotate by a certain amount about the origin
+    public Point rotateAboutOrigin(double degrees) {
+        double radians = Math.toRadians(degrees);
+        double newX = this.getX() * Math.cos(radians) - this.getY() * Math.sin(radians);
+        double newY = this.getX() * Math.sin(radians) + this.getY() * Math.cos(radians);
+        return new Point(newX, newY);
     }
 
     public double getX() {

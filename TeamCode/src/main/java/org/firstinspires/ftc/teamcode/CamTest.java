@@ -12,8 +12,8 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-@TeleOp(name = "TeleOp", group = "Tele")
-public class GoodTeleOp extends OpMode {
+@TeleOp(name = "Cam Test", group = "Tele")
+public class CamTest extends OpMode {
 
     private DcMotor flMotor = null;
     private DcMotor frMotor = null;
@@ -52,11 +52,13 @@ public class GoodTeleOp extends OpMode {
     private boolean engageRing = false;
     private boolean halfSpeed = false;
 
-
-
+    private Cam cam = new Cam(telemetry, hardwareMap);
+    private double[] coords = {0, 0, 0};
 
     @Override
     public void init() {
+
+        cam.initVuforia(hardwareMap);
 
         //Get Hardware Map
         flMotor = hardwareMap.get(DcMotor.class, "lmf" );
@@ -100,6 +102,9 @@ public class GoodTeleOp extends OpMode {
 
     @Override
     public void loop() {
+
+        cam.getCoords();
+        coords = Values.currentCoords;
         leftTrigger = gamepad2.left_trigger;
         rightTrigger = gamepad2.right_trigger;
 
@@ -251,19 +256,13 @@ public class GoodTeleOp extends OpMode {
             liftR.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         }
 
-        telemetry.addData("Swap mode: ", swap);
         telemetry.addData("Front Right Motor = ", frMotor.getCurrentPosition());
         telemetry.addData("Front Left Motor = ", flMotor.getCurrentPosition());
         telemetry.addData("Front Left Motor = ", brMotor.getCurrentPosition());
         telemetry.addData("Front Left Motor = ", frMotor.getCurrentPosition());
-        telemetry.addData("LiftMech = ", liftL.getCurrentPosition());
-        telemetry.addData("Arm Servo = ", WobbleArm.getPosition() );
-        telemetry.addData("Reverse = ", reverse);
-        telemetry.addData("halfSpeed = ", halfSpeed );
-        telemetry.addData("Ring Arm = ", ring );
-        telemetry.addData("WobbleLocker", engageLock);
-        telemetry.addData("Blue Back = ", backColor.blue());
-        telemetry.addData("Blue Front = ", frontColor.blue());
+        telemetry.addData("x: ", coords[0]);
+        telemetry.addData("y: ", coords[1]);
+        telemetry.addData("Angle: ", coords[2]);
         telemetry.update();
     }
 

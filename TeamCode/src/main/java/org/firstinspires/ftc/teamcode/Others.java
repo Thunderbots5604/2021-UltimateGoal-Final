@@ -2,6 +2,7 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple.Direction;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.util.Hardware;
@@ -25,10 +26,16 @@ public class Others extends LinearOpMode {
     private DcMotor LiftL = null;
     private DcMotor LiftR = null;
 
+
+    public Gyro gyro = new Gyro();
     //Declare Servos
     private Servo WobbleLocker;
     private Servo WobbleArm;
     private Servo RingArm;
+    private Servo camPlatform;
+
+    private ColorSensor frontColor;
+    private ColorSensor backColor;
 
     //Moving stuff between classes
     private Telemetry telemetry;
@@ -43,7 +50,6 @@ public class Others extends LinearOpMode {
     @Override
     public void runOpMode() {}
     public void initMotors(HardwareMap hardwareMap) {
-
         LiftL = hardwareMap.get(DcMotor.class, "LiftMechL");
         LiftR = hardwareMap.get(DcMotor.class, "LiftMechR");
         LiftR.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -51,15 +57,20 @@ public class Others extends LinearOpMode {
         WobbleLocker = hardwareMap.get(Servo.class, "WobbleLocker");
         RingArm = hardwareMap.get(Servo.class, "RingGrabber");
         WobbleArm = hardwareMap.get(Servo.class, "WobbleArm");
+        //camPlatform = hardwareMap.get(Servo.class, "camplat");
+
+        frontColor = hardwareMap.get(ColorSensor.class, "fc");
+        backColor = hardwareMap.get(ColorSensor.class, "bc");
     }
     public void lift() {
 
     }
     public void dropArm() {
-
+        RingArm.setPosition(0.61);
+        sleep(1200);
     }
     public void resetArm() {
-
+        RingArm.setPosition(0);
     }
     public void fireRing() {
 
@@ -69,5 +80,40 @@ public class Others extends LinearOpMode {
     }
     public void ringLG() {
 
+    }
+    /*  public static double trueAngle(){
+
+      return gyro.getAngle();
+      }*/
+    public int[] getReading(ColorSensor colorsensor) {
+        //outputs red, green, blue, luminosity, hue
+        int[] reading = new int[5];
+        reading[0] = colorsensor.red();
+        reading[1] = colorsensor.green();
+        reading[2] = colorsensor.blue();
+        reading[3] = colorsensor.alpha();
+        reading[4] = colorsensor.argb();
+        return reading;
+    }
+    public void testReading() {
+        int[] reading = new int[5];
+        while (true) {
+            reading = getReading(backColor);
+            telemetry.addData("R ", reading[0]);
+            telemetry.addData("G ", reading[1]);
+            telemetry.addData("B ", reading[2]);
+            telemetry.addData("L ", reading[3]);
+            telemetry.addData("A ", reading[4]);
+            telemetry.update();
+        }
+    }
+    public void rotateCamPlatform(double angle) {
+        camPlatform.setPosition(angle + camPlatform.getPosition());
+        if (camPlatform.getPosition() == 0) {
+            Cam.rotated = false;
+        }
+        else {
+            Cam.rotated = true;
+        }
     }
 }
