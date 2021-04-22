@@ -6,11 +6,11 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
-@Autonomous(name="Pathing", group="")
+@Autonomous(name="Spencer", group="")
 public class AutoPathing extends LinearOpMode {
 
     Cam cam = new Cam(telemetry, hardwareMap);
-    Move move = new Move(telemetry);
+    Move move = new Move(telemetry, this);
     Others motors = new Others(telemetry);
     Gyro gyro = new Gyro();
 
@@ -30,10 +30,41 @@ public class AutoPathing extends LinearOpMode {
         cam.endCam();
         waitForStart();
 
-        cam.getCoords();
-        coords = Values.currentCoords;
+        move.move(tileLength * 3 + 225, power, "forward");
+        motors.shootPower(-2200);
+        motors.getRing();
+        motors.fireRing(2);
+        motors.shootPower(0);
+        sleep(1000);
+        motors.shootPower(-2200);
+        motors.fireRing(1);
+        motors.shootPower(0);
+        move.move(tileLength, power, "forward");
+        motors.dropArm();
+        move.move(300, power, "backward");
+        /*
+        if (zone == 0) {
+            move.move(tileLength * 2, power, "strafe left");
+        }
+        else if (zone == 1) {
+            move.move(tileLength, power, "strafe left");
+            move.move(tileLength, power, "forward");
+        }
+        else {
+            move.move(tileLength * 2, power, "strafe left");
+            move.move(tileLength * 2, power, "forward");
+        }
+        motors.dropArm();
+        sleep(1500);
+        motors.resetArm();
+        if (zone == 0) {
+            move.move(tileLength, power, "strafe right");
+            move.move(tileLength, power, "forward");
+        }
+        move.parkToWhite(hardwareMap, false);
+        */
 
-        //Drop Wobble Goal on zone
+        /*//Drop Wobble Goal on zone
         move.move(halfOfField, power, "forward");
         if (zone == 1) {
             move.move(20, power, "turn right");
@@ -47,32 +78,30 @@ public class AutoPathing extends LinearOpMode {
         move.move(tileLength, power, "backward");
 
         //Go For PowerShot
-        move.move(tileLength, power, "strafe right");
-        for (int i = 0; i < 3; i++) {
-            move.move(10, power, "turn right");
-            motors.fireRing();
-        }
+        motors.getRing();
+        move.move(tileLength * 2, power, "strafe right");
+        motors.shootPower(-2240);
+        motors.fireRing(3);
+        motors.shootPower(0);
 
         //Pick up rings on field
         if (zone != 0) {
             sleep(500);
             move.move(0, power, "gyro turn");
-            //Makes pickup spinning thing
-            motors.getRing();
             move.move(tileLength, power, "forward");
             move.move(130, power, "turn right");
             move.move(0, power, "gyro turn");
 
             //Fire
             move.move(tileLength, power, "forward");
-            motors.fireRing();
-            motors.fireRing();
-            motors.fireRing();
+            motors.shootPower(-2240);
+            motors.fireRing(zone * 2 - 1);
 
             motors.ringLG();
+            motors.shootPower(0);
         }
 
         //Park
-        move.move(tileLength / 2, power, "forward");
+        move.move(tileLength / 2, power, "forward");*/
     }
 }

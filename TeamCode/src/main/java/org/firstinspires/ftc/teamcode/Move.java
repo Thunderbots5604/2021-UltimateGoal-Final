@@ -28,7 +28,7 @@ public class Move extends LinearOpMode {
     private Servo RingArm;
 
     private ColorSensor frontColor;
-    private ColorSensor backColor;
+    //private ColorSensor backColor;
 
     private boolean engageArm = false;
     private boolean engageLock = false;
@@ -37,6 +37,7 @@ public class Move extends LinearOpMode {
     private final double TICKS_PER_DEGREE = Values.ticksPerDegree;
 
     private Telemetry telemetry;
+    private LinearOpMode opMode;
 
     private int lfTarget;
     private int lbTarget;
@@ -50,8 +51,9 @@ public class Move extends LinearOpMode {
     private int tileLength = Values.tileLength;
     private double power = Values.power;
 
-    public Move(Telemetry telemetry) {
+    public Move(Telemetry telemetry, LinearOpMode opMode) {
         this.telemetry = telemetry;
+        this.opMode = opMode;
     }
     Others motors = new Others(telemetry);
 
@@ -64,13 +66,6 @@ public class Move extends LinearOpMode {
         leftMotorBack = hardwareMap.get(DcMotor.class, "lmb");
         rightMotorFront = hardwareMap.get(DcMotor.class, "rmf");
         rightMotorBack = hardwareMap.get(DcMotor.class, "rmb");
-
-        WobbleLocker = hardwareMap.get(Servo.class, "WobbleLocker");
-        RingArm = hardwareMap.get(Servo.class, "RingGrabber");
-        WobbleArm = hardwareMap.get(Servo.class, "WobbleArm");
-
-        frontColor = hardwareMap.get(ColorSensor.class, "fc");
-        backColor = hardwareMap.get(ColorSensor.class, "bc");
 
         leftMotorFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         leftMotorBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -158,20 +153,23 @@ public class Move extends LinearOpMode {
     public void strafeRight(double distance, double power) {
         moveToTicks(new double[]{distance, -distance, -distance, distance}, power);
     }
+
+    //Sets all ticks positive but motor moves backward if target is negative.
     public void moveToTicks(double[] targets, double power) {
         resetEncoders();
-        double max = Math.max(targets[0], targets[1]);max = Math.max(max, targets[2]); max = Math.max(max, targets[3]);
+        double max = Math.max(Math.abs(targets[0]), Math.abs(targets[1]));max = Math.max(max, Math.abs(targets[2])); max = Math.max(max, Math.abs(targets[3]));
         setPowers(power * (targets[0] / max), power * (targets[1] / max), power * (targets[2] / max), power * (targets[3] / max));
-        while (true/*opModeIsActive()*/) {
+        while (opMode.opModeIsActive()) {
             setTicks();
             for (int i = 0; i < motorTicks.length; i++) {
                 currentTicks[i] = Math.abs(motorTicks[i]);
                 if (currentTicks[i] > Math.abs(targets[i])) {
                     stopMotors();
-                    break;
+                    return;
                 }
             }
         }
+        stopMotors();
     }
     public void setTicks() {
         motorTicks[0] = leftMotorFront.getCurrentPosition();
@@ -187,5 +185,29 @@ public class Move extends LinearOpMode {
         leftMotorBack.setPower(lmb);
         rightMotorFront.setPower(rmf);
         rightMotorBack.setPower(rmb);
+    }
+
+    public void parkToWhite(HardwareMap map, boolean direction) {
+        //true is forwards, false is backwards
+        ColorSensor backColor = map.get(ColorSensor.class, "bc");
+        int reading;
+        if (direction) {
+            setPowers(.3, .3, .3, .3);
+        } else {
+            setPowers(-.3, -.3, -.3, -.3);
+        }
+        runtime.reset();
+        while (runtime.milliseconds() < 5000 && opModeIsActive()) {
+            reading = backColor.alpha();
+            if (reading > 100) {
+                break;
+            }
+        }
+        stopMotors();
+        if (!direction) {
+            moveForward((int) (tileLength * 0.15), power);
+        } else {
+            moveBackward((int) (tileLength * 0.15), power);
+        }
     }
 }

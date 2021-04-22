@@ -2,6 +2,7 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple.Direction;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -22,19 +23,18 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 
 public class Others extends LinearOpMode {
 
-    //Declare Motors
-    private DcMotor LiftL = null;
-    private DcMotor LiftR = null;
-
-
     public Gyro gyro = new Gyro();
-    //Declare Servos
-    private Servo WobbleLocker;
-    private Servo WobbleArm;
-    private Servo RingArm;
+    public ElapsedTime time = new ElapsedTime();
+
+    //Declare Motors and Servos
+    private DcMotor intake = null;
+    private DcMotorEx flyWheel = null;
+    private DcMotor feeder = null;
+    private DcMotor wobbleArm;
+
+    private Servo wobbleLocker = null;
     private Servo camPlatform;
 
-    private ColorSensor frontColor;
     private ColorSensor backColor;
 
     //Moving stuff between classes
@@ -50,41 +50,62 @@ public class Others extends LinearOpMode {
     @Override
     public void runOpMode() {}
     public void initMotors(HardwareMap hardwareMap) {
-        LiftL = hardwareMap.get(DcMotor.class, "LiftMechL");
-        LiftR = hardwareMap.get(DcMotor.class, "LiftMechR");
-        LiftR.setDirection(DcMotorSimple.Direction.REVERSE);
+        intake = hardwareMap.get(DcMotor.class, "intake");
+        flyWheel = hardwareMap.get(DcMotorEx.class, "out");
+        feeder = hardwareMap.get(DcMotor.class, "feed");
+        wobbleArm = hardwareMap.get(DcMotor.class, "wobble");
 
-        WobbleLocker = hardwareMap.get(Servo.class, "WobbleLocker");
-        RingArm = hardwareMap.get(Servo.class, "RingGrabber");
-        WobbleArm = hardwareMap.get(Servo.class, "WobbleArm");
-        //camPlatform = hardwareMap.get(Servo.class, "camplat");
+        camPlatform = hardwareMap.get(Servo.class, "camplat");
+        wobbleLocker = hardwareMap.get(Servo.class, "locker");
 
-        frontColor = hardwareMap.get(ColorSensor.class, "fc");
         backColor = hardwareMap.get(ColorSensor.class, "bc");
-    }
-    public void lift() {
 
+        wobbleLocker.setPosition(.89);
     }
     public void dropArm() {
-        RingArm.setPosition(0.61);
-        sleep(1200);
+        reset();
+        while (wobbleArm.getCurrentPosition() < 1300) {
+            wobbleArm.setPower(.5);
+        }
+        wobbleArm.setPower(0);
+        wobbleLocker.setPosition(0);
     }
     public void resetArm() {
-        RingArm.setPosition(0);
+        reset();
+        while (wobbleArm.getCurrentPosition() > -1000) {
+            wobbleArm.setPower(-.5);
+        }
+        wobbleArm.setPower(0);
     }
-    public void fireRing() {
-
+    public void fireRing(int rings) {
+        while (rings > 0) {
+            time.reset();
+            feeder.setPower(0);
+            sleep(500);
+            while (getShootSpeed() > -2200 && time.milliseconds() < 3000) {
+                telemetry.addData("Speed: ", getShootSpeed());
+                telemetry.update();
+            }
+            feeder.setPower(-1);
+            while (getShootSpeed() < -2000 && time.milliseconds() < 3000) {}
+            rings--;
+        }
+        sleep(500);
+        feeder.setPower(0);
     }
     public void getRing(){
-
+        intake.setPower(1);
     }
     public void ringLG() {
-
+        intake.setPower(0);
+        feeder.setPower(0);
     }
-    /*  public static double trueAngle(){
-
-      return gyro.getAngle();
-      }*/
+    public void shootPower(double power) {
+        flyWheel.setVelocity(power);
+    }
+    public double getShootSpeed() {
+        return flyWheel.getVelocity();
+    }
     public int[] getReading(ColorSensor colorsensor) {
         //outputs red, green, blue, luminosity, hue
         int[] reading = new int[5];
@@ -108,12 +129,16 @@ public class Others extends LinearOpMode {
         }
     }
     public void rotateCamPlatform(double angle) {
-        camPlatform.setPosition(angle + camPlatform.getPosition());
+        camPlatform.setPosition(angle);
         if (camPlatform.getPosition() == 0) {
             Cam.rotated = false;
         }
         else {
             Cam.rotated = true;
         }
+    }
+    public void reset() {
+        wobbleArm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        wobbleArm.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
     }
 }

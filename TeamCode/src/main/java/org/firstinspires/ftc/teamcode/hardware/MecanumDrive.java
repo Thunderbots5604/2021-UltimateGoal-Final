@@ -41,6 +41,11 @@ public class MecanumDrive {
     //orientation used for changing which way is forward
     private int orientation;
     //final values should be changed based on testing for the robot each year
+    //multipliers for powers of motors
+    private final double FRONT_LEFT_MOTOR_POWER;
+    private final double FRONT_RIGHT_MOTOR_POWER;
+    private final double BACK_LEFT_MOTOR_POWER;
+    private final double BACK_RIGHT_MOTOR_POWER;
     //by default, have these at 1 and then measure the proportions for each wheel
     private final double FRONT_LEFT_TICK_MULTIPLIER;
     private final double FRONT_RIGHT_TICK_MULTIPLIER;
@@ -60,13 +65,12 @@ public class MecanumDrive {
     private final double ANGLE_RANGE;
     private final double LINEAR_RANGE;
 
-
-    //build a robot based on a hardware map and names of the motors
     public MecanumDrive(HardwareMap map, String frontLeftDrive, String frontRightDrive,
-                        String backLeftDrive, String backRightDrive, double flTickMultiplier,
-                        double frTickMultiplier, double blTickMultiplier, double brTickMultiplier,
-                        double xPerTick, double yPerTick, double anglePerTick, double angleRange,
-                        double linearRange) {
+                        String backLeftDrive, String backRightDrive, double flPowerMultiplier,
+                        double frPowerMultiplier, double blPowerMultiplier, double brPowerMultiplier,
+                        double flTickMultiplier, double frTickMultiplier, double blTickMultiplier,
+                        double brTickMultiplier, double xPerTick, double yPerTick, double anglePerTick,
+                        double angleRange, double linearRange) {
         this.map = map;
         //build the drive system
         frontLeftMotor = map.get(DcMotorEx.class, frontLeftDrive);
@@ -81,6 +85,10 @@ public class MecanumDrive {
         //orientation starts at 0
         orientation = 0;
         //final initialization
+        FRONT_LEFT_MOTOR_POWER = flPowerMultiplier;
+        FRONT_RIGHT_MOTOR_POWER = frPowerMultiplier;
+        BACK_LEFT_MOTOR_POWER = blPowerMultiplier;
+        BACK_RIGHT_MOTOR_POWER = brPowerMultiplier;
         //tick multipliers
         FRONT_LEFT_TICK_MULTIPLIER = flTickMultiplier;
         FRONT_RIGHT_TICK_MULTIPLIER = frTickMultiplier;
@@ -103,11 +111,19 @@ public class MecanumDrive {
         backLeftMotor.setDirection(DcMotorSimple.Direction.REVERSE);
     }
 
+    //constructor used when only motor powers are non 1 (ie teleop doesn't use any auto methods)
+    public MecanumDrive(HardwareMap map, String frontLeftDrive, String frontRightDrive,
+                        String backLeftDrive, String backRightDrive, double flPowerMultiplier,
+                        double frPowerMultiplier, double blPowerMultiplier, double brPowerMultiplier) {
+        this(map, frontLeftDrive, frontRightDrive, backLeftDrive, backRightDrive, flPowerMultiplier,
+                frPowerMultiplier, blPowerMultiplier, brPowerMultiplier, 1, 1, 1, 1, 1, 1, 1 / (double) Values.ticksPerDegree, 1, 1);
+    }
+
     //constructor used when the finals are set to a default of 1
     public MecanumDrive(HardwareMap map, String frontLeftDrive, String frontRightDrive,
                         String backLeftDrive, String backRightDrive) {
         this(map, frontLeftDrive, frontRightDrive, backLeftDrive,
-                backRightDrive, 1, 1, 1, 1, 1, 1, 1 / (double) Values.ticksPerDegree, 10, 10);
+                backRightDrive, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 / (double) Values.ticksPerDegree, 10, 10);
     }
 
     //include some default strings for lovable dummies that aren't gonna want to type
@@ -208,10 +224,10 @@ public class MecanumDrive {
         }
         //maxValue will normally be 1, so this just applies the power in that case
         //also apply the multiplier here
-        frontLeftMotor.setPower (multiplier * (frontLeftMotorPower / maxValue));
-        frontRightMotor.setPower(multiplier * (frontRightMotorPower / maxValue));
-        backLeftMotor.setPower(multiplier * (backLeftMotorPower / maxValue));
-        backRightMotor.setPower(multiplier * (backRightMotorPower / maxValue));
+        frontLeftMotor.setPower (multiplier * (frontLeftMotorPower / maxValue) * FRONT_LEFT_MOTOR_POWER);
+        frontRightMotor.setPower(multiplier * (frontRightMotorPower / maxValue) * FRONT_RIGHT_MOTOR_POWER);
+        backLeftMotor.setPower(multiplier * (backLeftMotorPower / maxValue) * BACK_LEFT_MOTOR_POWER);
+        backRightMotor.setPower(multiplier * (backRightMotorPower / maxValue) * BACK_RIGHT_MOTOR_POWER);
     }
 
     //stop method used for emergency stop - sets all motor powers to zero
@@ -395,6 +411,7 @@ public class MecanumDrive {
         RobotPosition newStartRobotPosition = RobotPosition.zero();
         //find the new end position
         RobotPosition newEndRobotPosition = endRobotPosition.minus(startRobotPosition);
+        newEndRobotPosition = new RobotPosition(new Point(newEndRobotPosition.getLocation().getY(), newEndRobotPosition.getLocation().getX()), newEndRobotPosition.getAngle());
         //difference in angles
         updateTicks();
         double angleDifference = newStartRobotPosition.getAngle();

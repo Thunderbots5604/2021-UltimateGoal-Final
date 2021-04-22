@@ -171,7 +171,7 @@ public class Cam extends LinearOpMode {
         }
         return ringCount;
     }
-    public void getCoords() {
+    public boolean getCoords() {
         double x = 0;
         double y = 0;
         double angle = 0;
@@ -203,7 +203,7 @@ public class Cam extends LinearOpMode {
             y = translation.get(1) / mmPerInch;
             // express the rotation of the robot in degrees.
             Orientation rotation = Orientation.getOrientation(lastLocation, EXTRINSIC, XYZ, DEGREES);
-            telemetry.addData("Rot (deg)", "{Roll, Pitch, Heading} = %.0f, %.0f, %.0f", rotation.firstAngle, rotation.secondAngle, rotation.thirdAngle);
+            telemetry.addData("z: ", translation.get(2) / mmPerInch);
             if (rotated) {
                 angle = gyro.getAngle();
             }
@@ -216,10 +216,11 @@ public class Cam extends LinearOpMode {
             Values.currentCoords[0] = x;
             Values.currentCoords[1] = y;
             Values.currentCoords[2] = angle;
-            return;
         }
-        Values.currentCoords[2] = gyro.getAngle();
-
+        else {
+            Values.currentCoords[2] = gyro.getAngle();
+        }
+        return targetVisible;
     }
     public int getZone() {
         String ringCount = tfod();
