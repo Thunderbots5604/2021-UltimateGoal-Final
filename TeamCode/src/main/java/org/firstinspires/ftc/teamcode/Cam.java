@@ -51,9 +51,9 @@ public class Cam extends LinearOpMode {
     private float phoneYRotate = 0;
     private float phoneZRotate = 0;
 
-    final float CAMERA_FORWARD_DISPLACEMENT = -5.0f * mmPerInch;
-    final float CAMERA_VERTICAL_DISPLACEMENT = 11.5f * mmPerInch;
-    final float CAMERA_LEFT_DISPLACEMENT = -1f * mmPerInch;
+    final float CAMERA_FORWARD_DISPLACEMENT = 0;
+    final float CAMERA_VERTICAL_DISPLACEMENT = 10f * mmPerInch;
+    final float CAMERA_LEFT_DISPLACEMENT = -7f * mmPerInch;
 
     //Put in the Vuforia Key
     private static String VUFORIA_KEY = "Aev2uJj/////AAABmXZLlevRVUibu3ft/8eoZ+p3zmNO/qYTRunRCIvDriYoZlMUcvJWFcEhvD1bCA6j/KWPlsVQyzCyh983kmfZN03G5bBJXhDh4fSgT4yyHL4PScYi5aG1UaxLa38X2vqzrbx9jpUqE3ESk6wYg8enXTPzp8R6+0SnrFoRLa7yobzCbBIfzAIpsGO33F9PVbXV+zsf0jqg0KA9OG24I6WkLZll0YPy1fDkR1okXL4pv2pm7eiKaZa2EXIYE/lGfkOAO42vxFMO8rAqA46/YeX/QPPTrCow0dE81FGSS6Wp9v3z45lqQ/kg+0TnSDkOJFrGKUYD1v6zTkfJLhF6DDAuW1TwPcdof0349IOncpuCpcz9";

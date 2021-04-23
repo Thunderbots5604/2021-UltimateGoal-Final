@@ -61,6 +61,8 @@ public class Others extends LinearOpMode {
         backColor = hardwareMap.get(ColorSensor.class, "bc");
 
         wobbleLocker.setPosition(.89);
+        //.8 for camplatform is looking left ish
+        camPlatform.setPosition(1);
     }
     public void dropArm() {
         reset();
@@ -81,11 +83,11 @@ public class Others extends LinearOpMode {
         while (rings > 0) {
             time.reset();
             feeder.setPower(0);
-            sleep(500);
             while (getShootSpeed() > -2200 && time.milliseconds() < 3000) {
                 telemetry.addData("Speed: ", getShootSpeed());
                 telemetry.update();
             }
+            sleep(500);
             feeder.setPower(-1);
             while (getShootSpeed() < -2000 && time.milliseconds() < 3000) {}
             rings--;

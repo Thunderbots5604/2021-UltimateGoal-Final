@@ -26,5 +26,6 @@ public class Test extends LinearOpMode {
         cam.initVuforia(hardwareMap);
         gyro.initGyro(hardwareMap);
         waitForStart();
+        move.move(90, power, "turn right");
     }
 }

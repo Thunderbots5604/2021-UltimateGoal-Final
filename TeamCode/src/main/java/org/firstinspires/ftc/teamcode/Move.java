@@ -197,7 +197,7 @@ public class Move extends LinearOpMode {
             setPowers(-.3, -.3, -.3, -.3);
         }
         runtime.reset();
-        while (runtime.milliseconds() < 5000 && opModeIsActive()) {
+        while (runtime.milliseconds() < 5000 && opMode.opModeIsActive()) {
             reading = backColor.alpha();
             if (reading > 100) {
                 break;

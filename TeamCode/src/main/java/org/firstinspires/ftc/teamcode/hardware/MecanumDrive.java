@@ -4,10 +4,36 @@ dealing with motors, hardware, etc. that is needed for movement
 The autonomous portions are handled by robot since they use a lot of different sensors and stuff
  */
 
+
+
+//JUST IN CASE I NEED IT FOR THIS MEETING
+/*
+            -Most prominent issues:
+                Not point turns were very slow and difficult
+                strafe was mostly good, but a little drifty
+                slow and noisy
+                inconsistent firing
+                ESD
+                got stuck on rings
+                Driving aim
+                polycord occasionally came off
+                Don't destroy rings
+                wobble goal arm
+
+
+            -need auto that does more
+
+            -good job:
+                Picking up went well
+                Didn't break anything
+                No disconnects
+                No pieces fell
+                Hit powershots
+                wobble goal during auto
+             */
 package org.firstinspires.ftc.teamcode.hardware;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.robot.Robot;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -61,10 +87,17 @@ public class MecanumDrive {
     private int previousEncoderFR;
     private int previousEncoderBL;
     private int previousEncoderBR;
+    //change in encoder values
+    private double changeInFL;
+    private double changeInFR;
+    private double changeInBL;
+    private double changeInBR;
     //final value for accuracy of equals's for angles and linear
     private final double ANGLE_RANGE;
     private final double LINEAR_RANGE;
 
+
+    //build a robot based on a hardware map and names of the motors
     public MecanumDrive(HardwareMap map, String frontLeftDrive, String frontRightDrive,
                         String backLeftDrive, String backRightDrive, double flPowerMultiplier,
                         double frPowerMultiplier, double blPowerMultiplier, double brPowerMultiplier,
@@ -110,7 +143,6 @@ public class MecanumDrive {
         frontLeftMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         backLeftMotor.setDirection(DcMotorSimple.Direction.REVERSE);
     }
-
     //constructor used when only motor powers are non 1 (ie teleop doesn't use any auto methods)
     public MecanumDrive(HardwareMap map, String frontLeftDrive, String frontRightDrive,
                         String backLeftDrive, String backRightDrive, double flPowerMultiplier,
@@ -238,272 +270,101 @@ public class MecanumDrive {
         backRightMotor.setPower(0);
     }
 
-    //methods that involve other methods
-    //moveOn is used to move along a specific line and from one angle to another
-    //TODO: get this to work. right now it sorta works but not really
-    public void moveOnSimultaneous(RobotPosition startRobotPosition, RobotPosition endRobotPosition, double power, Telemetry REMOVELATER) {
-        //for testing only
-        int count = 0;
-        //we need to generate a new end position and start position, where we start at (0,0) with
-        //angle = 0 and determine what the same relative end position would be
-        RobotPosition newStartRobotPosition = RobotPosition.zero();
-        //find the new end position
-        RobotPosition newEndRobotPosition = endRobotPosition.minus(startRobotPosition);
-        //difference in angles
-        double angleDifference = newEndRobotPosition.getAngle();
-        //now we need to route from the zero position to the end position
-        while (!newStartRobotPosition.equalsRange(newEndRobotPosition, LINEAR_RANGE, ANGLE_RANGE)) {
-            //reset motor powers to start
+    //new move on simultaneous programmed from the ground up
+    public double[] moveOnSimultaneous(double[] startPosition, double[] targetPosition, double power, Telemetry tele) {
+        //figure out initial angle
+        double angle = Math.toRadians(startPosition[2]);
+        //get differences in x, y, and angle
+        double differenceInX = targetPosition[0] - startPosition[0];
+        double differenceInY = targetPosition[1] - startPosition[1];
+        double differenceInAngle = MathUtilities.angleDifference(targetPosition[2], startPosition[2]);
+        //the x and y need to be rotated by the initial angle
+        double xMotion = differenceInX * Math.cos(angle) - differenceInY * Math.sin(angle);
+        double yMotion = differenceInX * Math.sin(angle) + differenceInY * Math.cos(angle);
+        double robotXMoved;
+        double robotYMoved;
+        double angleMoved;
+        tele.addData("CurrentX", startPosition[0]);
+        tele.addData("CurrentY", startPosition[1]);
+        tele.addData("CurrentAngle", startPosition[2]);
+        tele.addData("TargetX", targetPosition[0]);
+        tele.addData("TargetY", targetPosition[1]);
+        tele.addData("TargetAngle", targetPosition[2]);
+        tele.addData("flPower", this.getFrontLeftMotorPower());
+        tele.addData("frPower", this.getFrontRightMotorPower());
+        tele.addData("blPower", this.getBackLeftMotorPower());
+        tele.addData("brPower", this.getBackRightMotorPower());
+        tele.update();
+        //check if the positions are close enough to equal
+        while (!(MathUtilities.within(LINEAR_RANGE, startPosition[0], targetPosition[0])
+                && MathUtilities.within(LINEAR_RANGE, startPosition[1], targetPosition[1])
+                && MathUtilities.within(ANGLE_RANGE, startPosition[2], targetPosition[2]))) {
+            //movement piece
             resetPowerValues();
-            //determine the details about the angle
-            if (!MathUtilities.within(ANGLE_RANGE, newStartRobotPosition.getAngle(), newEndRobotPosition.getAngle())) {
-                //if the angles aren't close enough to be the same
-                //here we branch into two: turning right vs turning left
-                //first, make sure that the difference in angles is between -180 and 180
-                REMOVELATER.addData("angles aren't the same", null);
-                if (Math.abs(angleDifference) > 180) {
-                    angleDifference -= Math.copySign(360, angleDifference);
-                    REMOVELATER.addData("angle diff is greater than 180", null);
-                }
-                //now, we move left or right to try to match to the angle
-                radialMove(Math.copySign(power, angleDifference));
-            }
-            //next, we need to determine the details about the linear motion
-            if(!newStartRobotPosition.getLocation().equalsRange(newEndRobotPosition.getLocation(), LINEAR_RANGE)) {
-                //just linear move on the end minus the start position
-                linearMove(newEndRobotPosition.getLocation().minus(newStartRobotPosition.getLocation()), power);
-                REMOVELATER.addData("location diff is real", null);
-            }
+            linearMove(new Point(xMotion, yMotion), power);
+            radialMove(Math.copySign(power, differenceInAngle));
             updateMotorPowers();
-            //finally, we need to update the position
-            updateTicks();
-            newStartRobotPosition = newStartRobotPosition.plus(new RobotPosition(calculateChangeInLocation().rotateAboutOrigin(calculateChangeInAngle()), calculateChangeInAngle()));
-            //for testing - update the telemetry with a count of how many times it has run
-            count++;
-            REMOVELATER.addData("Current Location X", newStartRobotPosition.getLocation().getX());
-            REMOVELATER.addData("Current Location Y", newStartRobotPosition.getLocation().getY());
-            REMOVELATER.addData("Angle", newStartRobotPosition.getAngle());
-            REMOVELATER.addData("count", count);
-            REMOVELATER.update();
+            //update the robot positions
+            updateEncoderValues();
+            robotXMoved = calculateChangeInX();
+            robotYMoved = calculateChangeInY();
+            angleMoved = calculateChangeInAngle();
+            //now update the positions
+            startPosition[0] += (robotXMoved * Math.cos(-1 * angle) - robotYMoved * Math.sin(-1 * angle));
+            startPosition[1] += (robotXMoved * Math.sin(-1 * angle) + robotYMoved * Math.cos(-1 * angle));
+            startPosition[2] += angleMoved;
+            //update the values used for calculation
+            angle = Math.toRadians(startPosition[2]);
+            differenceInX = targetPosition[0] - startPosition[0];
+            differenceInY = targetPosition[1] - startPosition[1];
+            differenceInAngle = MathUtilities.angleDifference(targetPosition[2], startPosition[2]);
+            xMotion = differenceInX * Math.cos(angle) - differenceInY * Math.sin(angle);
+            yMotion = differenceInX * Math.sin(angle) + differenceInY * Math.cos(angle);
+            //update telemetry
+            tele.addData("CurrentX", startPosition[0]);
+            tele.addData("CurrentY", startPosition[1]);
+            tele.addData("CurrentAngle", startPosition[2]);
+            tele.addData("TargetX", targetPosition[0]);
+            tele.addData("TargetY", targetPosition[1]);
+            tele.addData("TargetAngle", targetPosition[2]);
+            tele.addData("flPower", this.getFrontLeftMotorPower());
+            tele.addData("frPower", this.getFrontRightMotorPower());
+            tele.addData("blPower", this.getBackLeftMotorPower());
+            tele.addData("brPower", this.getBackRightMotorPower());
+            tele.update();
         }
-        stop();
+        this.stop();
+        //return the estimated current position
+        return startPosition;
+    }
+    //update all the values for the changes and previous values
+    private void updateEncoderValues() {
+        changeInFL = (this.getFrontLeftMotorTicks() - previousEncoderFL) * FRONT_LEFT_TICK_MULTIPLIER;
+        changeInFR = (this.getFrontRightMotorTicks() - previousEncoderFR) * FRONT_RIGHT_TICK_MULTIPLIER;
+        changeInBL = (this.getBackLeftMotorTicks() - previousEncoderBL) * BACK_LEFT_TICK_MULTIPLIER;
+        changeInBR = (this.getBackRightMotorTicks() - previousEncoderBR) * BACK_RIGHT_TICK_MULTIPLIER;
+        previousEncoderFL = this.getFrontLeftMotorTicks();
+        previousEncoderFR = this.getFrontRightMotorTicks();
+        previousEncoderBL = this.getBackLeftMotorTicks();
+        previousEncoderBR = this.getBackRightMotorTicks();
     }
 
-    //non simultaneous radial and linear combined motion
-    public RobotPosition moveOn(RobotPosition startRobotPosition, RobotPosition endRobotPosition, double power, Telemetry REMOVELATER) {
-        //we need to generate a new end position and start position, where we start at (0,0) with
-        //angle = 0 and determine what the same relative end position would be
-        RobotPosition newStartRobotPosition = RobotPosition.zero();
-        //find the new end position
-        RobotPosition newEndRobotPosition = endRobotPosition.minus(startRobotPosition);
-        //difference in angles
-        double angleDifference = newEndRobotPosition.getAngle();
-        //update the tick values
-        updateTicks();
-        //determine the details about the angle
-        while (!MathUtilities.within(ANGLE_RANGE, newStartRobotPosition.getAngle(), newEndRobotPosition.getAngle())) {
-            //if the angles aren't close enough to be the same
-            //reset motor powers to start
-            resetPowerValues();
-            //give some data to the telemetry
-            if (angleDifference > 0) {
-                REMOVELATER.addData("turning", "left");
-            }
-            else {
-                REMOVELATER.addData("turning", "right");
-            }
-            REMOVELATER.addData("angles aren't the same", null);
-            //now, we move left or right to try to match to the angle
-            radialMove(Math.copySign(power, angleDifference));
-            //update motor powers
-            updateMotorPowers();
-            //calculate the positions again
-            newStartRobotPosition = newStartRobotPosition.minus(new RobotPosition(/*calculateChangeInLocation().rotateAboutOrigin(newStartRobotPosition.getAngle())*/Point.origin(), calculateChangeInAngle()));
-            //update the ticks
-            updateTicks();
-            //current position
-            REMOVELATER.addData("Angle", newStartRobotPosition.getAngle());
-            REMOVELATER.addData("X Position", newStartRobotPosition.getLocation().getX());
-            REMOVELATER.addData("Y Position", newStartRobotPosition.getLocation().getY());
-            REMOVELATER.update();
-        }
-        stop();
-        //next, we need to do linear motion
-
-        while(!newStartRobotPosition.getLocation().equalsRange(newEndRobotPosition.getLocation(), LINEAR_RANGE)) {
-            //reset the motor powers
-            resetPowerValues();
-            //just linear move on the end minus the start position
-            linearMove(newEndRobotPosition.getLocation().minus(newStartRobotPosition.getLocation()).rotateAboutOrigin(newStartRobotPosition.getAngle()), power);
-            REMOVELATER.addData("location diff is real", null);
-            //update motor powers
-            updateMotorPowers();
-            //calculate the positions again
-            newStartRobotPosition = newStartRobotPosition.minus(new RobotPosition(calculateChangeInLocation().rotateAboutOrigin(newStartRobotPosition.getAngle()), 0));
-            //update the ticks
-            updateTicks();
-            //current position
-            REMOVELATER.addData("Angle", newStartRobotPosition.getAngle());
-            REMOVELATER.addData("X Position", newStartRobotPosition.getLocation().getX());
-            REMOVELATER.addData("Y Position", newStartRobotPosition.getLocation().getY());
-            REMOVELATER.update();
-        }
-
-        stop();
-        return newStartRobotPosition;
+    //calculate the change in x position relative to robot
+    private double calculateChangeInX() {
+        //+, -, -, +
+        return X_DISTANCE_PER_TICK * (changeInFL - changeInFR - changeInBL + changeInBR) / 4;
     }
 
-    //methods that involve other methods
-    //moveOn is used to move along a specific line and from one angle to another
-    public void test(RobotPosition startRobotPosition, RobotPosition endRobotPosition, double power, Telemetry REMOVELATER) {
-        //for testing only
-        int count = 0;
-        //we need to generate a new end position and start position, where we start at (0,0) with
-        //angle = 0 and determine what the same relative end position would be
-        RobotPosition newStartRobotPosition = RobotPosition.zero();
-        //find the new end position
-        RobotPosition newEndRobotPosition = endRobotPosition.minus(startRobotPosition);
-        //difference in angles
-        double angleDifference = newEndRobotPosition.getAngle();
-        //now we need to route from the zero position to the end position
-        while (!newStartRobotPosition.equalsRange(newEndRobotPosition, LINEAR_RANGE, ANGLE_RANGE)) {
-            //reset motor powers to start
-            resetPowerValues();
-            //determine the details about the angle
-            if (!MathUtilities.within(ANGLE_RANGE, newStartRobotPosition.getAngle(), newEndRobotPosition.getAngle())) {
-                //if the angles aren't close enough to be the same
-                //here we branch into two: turning right vs turning left
-                //first, make sure that the difference in angles is between -180 and 180
-                REMOVELATER.addData("angles aren't the same", null);
-                if (Math.abs(angleDifference) > 180) {
-                    angleDifference -= Math.copySign(360, angleDifference);
-                    REMOVELATER.addData("angle diff is greater than 180", null);
-                }
-                //now, we move left or right to try to match to the angle
-                radialMove(Math.copySign(power, angleDifference));
-            }
-            //next, we need to determine the details about the linear motion
-            if(!newStartRobotPosition.getLocation().equalsRange(newEndRobotPosition.getLocation(), LINEAR_RANGE)) {
-                //just linear move on the end minus the start position
-                linearMove(newEndRobotPosition.getLocation().minus(newStartRobotPosition.getLocation()), power);
-                REMOVELATER.addData("location diff is real", null);
-            }
-            updateMotorPowers();
-            //finally, we need to update the position
-            updateTicks();
-            newStartRobotPosition = newStartRobotPosition.minus(new RobotPosition(calculateChangeInLocation(), calculateChangeInAngle()));
-            //for testing - update the telemetry with a count of how many times it has run
-            count++;
-            REMOVELATER.addData("Current Location X", newStartRobotPosition.getLocation().getX());
-            REMOVELATER.addData("Current Location Y", newStartRobotPosition.getLocation().getY());
-            REMOVELATER.addData("Angle", newStartRobotPosition.getAngle());
-            REMOVELATER.addData("count", count);
-            REMOVELATER.update();
-        }
-        stop();
+    //calculate the change in y position relative to robot
+    private double calculateChangeInY() {
+        //all motors go in the same direction for this
+        return Y_DISTANCE_PER_TICK * (changeInFL + changeInFR + changeInBL + changeInBR) / 4;
     }
 
-    public RobotPosition endMe(RobotPosition startRobotPosition, RobotPosition endRobotPosition, double power, Telemetry REMOVELATER) {
-        //for testing only
-        int count = 0;
-        //we need to generate a new end position and start position, where we start at (0,0) with
-        //angle = 0 and determine what the same relative end position would be
-        RobotPosition newStartRobotPosition = RobotPosition.zero();
-        //find the new end position
-        RobotPosition newEndRobotPosition = endRobotPosition.minus(startRobotPosition);
-        newEndRobotPosition = new RobotPosition(new Point(newEndRobotPosition.getLocation().getY(), newEndRobotPosition.getLocation().getX()), newEndRobotPosition.getAngle());
-        //difference in angles
-        updateTicks();
-        double angleDifference = newStartRobotPosition.getAngle();
-        while (!MathUtilities.within(ANGLE_RANGE, newStartRobotPosition.getAngle(), newEndRobotPosition.getAngle())) {
-            //if the angles aren't close enough to be the same
-            //reset motor powers to start
-            resetPowerValues();
-            //give some data to the telemetry
-            if (angleDifference > 0) {
-                REMOVELATER.addData("turning", "left");
-            }
-            else {
-                REMOVELATER.addData("turning", "right");
-            }
-            REMOVELATER.addData("angles aren't the same", null);
-            //now, we move left or right to try to match to the angle
-            radialMove(Math.copySign(power, angleDifference));
-            //update motor powers
-            updateMotorPowers();
-            //calculate the positions again
-            newStartRobotPosition = newStartRobotPosition.minus(new RobotPosition(Point.origin(), calculateChangeInAngle()));
-            //update the ticks
-            updateTicks();
-            //current position
-            REMOVELATER.addData("Angle", newStartRobotPosition.getAngle());
-            REMOVELATER.addData("X Position", newStartRobotPosition.getLocation().getX());
-            REMOVELATER.addData("Y Position", newStartRobotPosition.getLocation().getY());
-            REMOVELATER.update();
-        }
-        newEndRobotPosition = new RobotPosition(newEndRobotPosition.getLocation().rotateAboutOrigin(newEndRobotPosition.getAngle()), 0);
-        //now we need to route from the zero position to the end position
-        while (!newStartRobotPosition.getLocation().equalsRange(newEndRobotPosition.getLocation(), LINEAR_RANGE)) {
-            resetPowerValues();
-            //just linear move on the end minus the start position
-            linearMove(newEndRobotPosition.getLocation().minus(newStartRobotPosition.getLocation()), power);
-            REMOVELATER.addData("location diff is real", null);
-            updateMotorPowers();
-            //finally, we need to update the position
-            updateTicks();
-            newStartRobotPosition = newStartRobotPosition.minus(new RobotPosition(calculateChangeInLocation(), calculateChangeInAngle()));
-            //for testing - update the telemetry with a count of how many times it has run
-            count++;
-            REMOVELATER.addData("Current Location X", newStartRobotPosition.getLocation().getX());
-            REMOVELATER.addData("Current Location Y", newStartRobotPosition.getLocation().getY());
-            REMOVELATER.addData("Angle", newStartRobotPosition.getAngle());
-            REMOVELATER.addData("count", count);
-            REMOVELATER.update();
-        }
-        stop();
-        return newStartRobotPosition;
-    }
-
-    //update the previous tick values
-    public void updateTicks() {
-        //first set the previous ticks equal to the current ticks
-        previousEncoderFL = getFrontLeftMotorTicks();
-        previousEncoderFR = getFrontRightMotorTicks();
-        previousEncoderBL = getBackLeftMotorTicks();
-        previousEncoderBR = getBackRightMotorTicks();
-    }
-
-    //calculate the change in location based on encoder ticks
-    public Point calculateChangeInLocation() {
-        //first we find the change in ticks
-        //don't need back left change
-        double changeInTicksFL = (getFrontLeftMotorTicks() - previousEncoderFL) * FRONT_LEFT_TICK_MULTIPLIER;
-        double changeInTicksFR = (getFrontRightMotorTicks() - previousEncoderFR) * FRONT_RIGHT_TICK_MULTIPLIER;
-        double changeInTicksBR = (getBackRightMotorTicks() - previousEncoderBR) * BACK_RIGHT_TICK_MULTIPLIER;
-        /*this is an approximation, so we can just use expected motion
-        since actual motion takes far too long to find*/
-        /*After doing the algebra, assuming correct motion, we get
-        x ~ (FR-FL)/2
-        y ~ (FR+BR)/2
-         */
-        //change in x
-        double changeInX = X_DISTANCE_PER_TICK * -1 * ((changeInTicksFR - changeInTicksFL) / 2);
-        //change in y
-        double changeInY = Y_DISTANCE_PER_TICK * -1 * ((changeInTicksFR + changeInTicksBR) / 2);
-        return new Point(changeInX, changeInY);
-    }
-
-    //calculate the change in angle based on encoder ticks
-    public double calculateChangeInAngle() {
-        //first we find the change in ticks
-        //don't need anything except FR and BL for this one
-        double changeInTicksFR = (getFrontRightMotorTicks() - previousEncoderFR) * FRONT_RIGHT_TICK_MULTIPLIER;
-        double changeInTicksBL = (getBackLeftMotorTicks() - previousEncoderBL) * BACK_LEFT_TICK_MULTIPLIER;
-        /* algebra says that correct motion will give
-        turning ~ (FR-BL)/2
-         */
-        return ANGLE_PER_TICK * (changeInTicksFR - changeInTicksBL) / 2;
-
+    //calculate the change in angle relative to robot
+    private double calculateChangeInAngle() {
+        //+, -, +, -
+        return ANGLE_PER_TICK * (changeInFL - changeInFR + changeInBL - changeInBR) / 4;
     }
 
     //setters for only the booleans because using setters for other values will break things
