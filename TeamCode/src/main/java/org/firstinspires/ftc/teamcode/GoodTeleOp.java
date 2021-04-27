@@ -12,22 +12,20 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-@TeleOp(name = "TeleOp", group = "Tele")
+@TeleOp(name = "GoodTele", group = "Tele")
 public class GoodTeleOp extends OpMode {
 
     private DcMotor flMotor = null;
     private DcMotor frMotor = null;
     private DcMotor blMotor = null;
     private DcMotor brMotor = null;
-    private DcMotor liftL = null;
-    private DcMotor liftR = null;
 
-    private Servo WobbleLocker;
-    private Servo WobbleArm;
-    private Servo RingArm;
+    private DcMotor intake = null;
+    private DcMotor flyWheel = null;
+    private DcMotor feeder = null;
 
-    private ColorSensor frontColor;
-    private ColorSensor backColor;
+    private DcMotor wobbleArm = null;
+    private Servo wobbleLocker;
 
     private double powerFRBL = 0;
     private double powerFLBR = 0;
@@ -46,14 +44,16 @@ public class GoodTeleOp extends OpMode {
     private boolean pastA = false;
     private boolean secondA = false;
     private boolean pastLB = false;
+    private boolean pastRB = false;
+    private boolean secondRB = false;
     private boolean engageArm = false;
     private boolean engageLock = false;
     private boolean swap = false;
     private boolean engageRing = false;
     private boolean halfSpeed = false;
 
-
-
+    //private boolean feederTimer = false;
+    //private
 
     @Override
     public void init() {
@@ -63,26 +63,18 @@ public class GoodTeleOp extends OpMode {
         frMotor = hardwareMap.get(DcMotor.class, "rmf" );
         blMotor = hardwareMap.get(DcMotor.class, "lmb" );
         brMotor = hardwareMap.get(DcMotor.class, "rmb" );
-        liftL = hardwareMap.get(DcMotor.class, "LiftMechL");
-        liftR = hardwareMap.get(DcMotor.class, "LiftMechR");
 
-        WobbleLocker = hardwareMap.get(Servo.class, "WobbleLocker" );
-        RingArm = hardwareMap.get(Servo.class, "RingGrabber");
-        WobbleArm = hardwareMap.get(Servo.class, "WobbleArm");
+        intake = hardwareMap.get(DcMotor.class, "intake");
+        flyWheel = hardwareMap.get(DcMotor.class, "out");
+        feeder = hardwareMap.get(DcMotor.class, "feed");
+        wobbleArm = hardwareMap.get(DcMotor.class, "wobble");
 
-        frontColor = hardwareMap.get(ColorSensor.class, "fc");
-        backColor = hardwareMap.get(ColorSensor.class, "bc");
+        wobbleLocker = hardwareMap.get(Servo.class, "locker");
+
 
         //Reverse Motor Directions to Drive Straight
         flMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         blMotor.setDirection(DcMotorSimple.Direction.REVERSE);
-        liftL.setDirection(DcMotorSimple.Direction.REVERSE);
-
-        liftL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        liftR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
-        liftL.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        liftR.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
 
 
@@ -94,7 +86,6 @@ public class GoodTeleOp extends OpMode {
     }
 
     public void start(){
-        RingArm.setPosition(0.6);
 
     }
 
@@ -155,21 +146,6 @@ public class GoodTeleOp extends OpMode {
         }
         pastX = gamepad1.x;
 
-        //Lift Mechanism Up and Down
-        if(leftTrigger > 0 && ((liftL.getCurrentPosition() < -2 || liftR.getCurrentPosition() < -2) || gamepad2.right_bumper)){
-            liftL.setPower(leftTrigger / 2);
-            liftR.setPower(leftTrigger / 2);
-
-        }
-        else if(rightTrigger > 0){
-            liftL.setPower(-rightTrigger / 2);
-            liftR.setPower(-rightTrigger / 2);
-        }
-        else {
-            liftL.setPower(0);
-            liftR.setPower(0);
-        }
-
         //Halfspeed Toggle
         if(gamepad1.a == false && pastA == true){
             halfSpeed = !halfSpeed;
@@ -183,58 +159,58 @@ public class GoodTeleOp extends OpMode {
         }
         pastA = gamepad1.a;
 
-
-        //Wobble Locker Toggle
-        if(gamepad2.x && !secondX){
-            engageLock = !engageLock;
-            if(engageLock){
-                WobbleLocker.setPosition(0.4);
-
+        if (gamepad2.y && !pastY) {
+            if (intake.getPower() == 0) {
+                intake.setPower(1);
             }
-            else{
-                WobbleLocker.setPosition(0.5);
-            }
-        }
-        secondX = gamepad2.x;
-
-        //Wobble Arm Toggle
-        if(gamepad2.y && !pastY){
-            engageArm = !engageArm;
-            if(engageArm){
-                WobbleArm.setPosition(0.9);
-                WobbleLocker.setPosition(0.5);
-
-            }
-            else{
-                WobbleArm.setPosition(0);
+            else {
+                intake.setPower(0);
             }
         }
         pastY = gamepad2.y;
 
-        //Ring Grabbing Toggle
-        if(gamepad2.a && !secondA){
-            ring = !ring;
-            if(ring){
-                RingArm.setPosition(0.9);
+        if (gamepad2.x && !secondX) {
+            if (flyWheel.getPower() == 0) {
+                flyWheel.setPower(-1);
             }
-            else{
-                RingArm.setPosition(0.65);
+            else {
+                flyWheel.setPower(0);
             }
         }
-        secondA = gamepad2.a;
+        secondX = gamepad2.x;
 
-        //Ring Arm all the way up
-        if(gamepad2.b && !secondB){
-            ring = !ring;
-            if(ring){
-                RingArm.setPosition(0.1);
+        if (gamepad2.right_bumper && !secondRB) {
+            if (feeder.getPower() == 0) {
+                feeder.setPower(-1);
+                //feederTimer = true;
+                //feederTimerInitial = runtime.Milliseconds();
             }
-            else{
-                RingArm.setPosition(0.65);
+            else {
+                feeder.setPower(0);
+            }
+            secondRB = gamepad2.right_bumper;
+        }
+        if (gamepad2.left_trigger > 0) {
+            wobbleArm.setPower(gamepad2.left_trigger);
+        }
+        if (gamepad2.left_trigger > 0) {
+            wobbleArm.setPower(gamepad2.left_trigger);
+        }
+        else if (gamepad2.right_trigger > 0) {
+            wobbleArm.setPower(-gamepad2.right_trigger);
+        }
+        else {
+            wobbleArm.setPower(0);
+        }
+        if (gamepad2.left_bumper && !pastLB) {
+            if (wobbleLocker.getPosition() == 0) {
+                wobbleLocker.setPosition(.89);
+            }
+            else {
+                wobbleLocker.setPosition(0);
             }
         }
-        secondB = gamepad2.b;
-
+        pastLB = gamepad2.left_bumper;
 
         if(gamepad2.back) {
             flMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -245,10 +221,6 @@ public class GoodTeleOp extends OpMode {
             frMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             blMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             brMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            liftL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            liftR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            liftL.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            liftR.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         }
 
         telemetry.addData("Swap mode: ", swap);
@@ -256,14 +228,9 @@ public class GoodTeleOp extends OpMode {
         telemetry.addData("Front Left Motor = ", flMotor.getCurrentPosition());
         telemetry.addData("Front Left Motor = ", brMotor.getCurrentPosition());
         telemetry.addData("Front Left Motor = ", frMotor.getCurrentPosition());
-        telemetry.addData("LiftMech = ", liftL.getCurrentPosition());
-        telemetry.addData("Arm Servo = ", WobbleArm.getPosition() );
+        telemetry.addData("Wobble Arm Encoder = ", wobbleArm.getCurrentPosition());
         telemetry.addData("Reverse = ", reverse);
-        telemetry.addData("halfSpeed = ", halfSpeed );
-        telemetry.addData("Ring Arm = ", ring );
-        telemetry.addData("WobbleLocker", engageLock);
-        telemetry.addData("Blue Back = ", backColor.blue());
-        telemetry.addData("Blue Front = ", frontColor.blue());
+        telemetry.addData("halfSpeed = ", halfSpeed);
         telemetry.update();
     }
 

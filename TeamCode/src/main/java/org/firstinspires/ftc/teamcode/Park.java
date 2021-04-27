@@ -9,7 +9,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 @Autonomous(name="Park", group="Competition")
 public class Park extends LinearOpMode {
 
-    Move move = new Move(telemetry);
+    Move move = new Move(telemetry, this);
 
     @Override
     public void runOpMode() throws InterruptedException {

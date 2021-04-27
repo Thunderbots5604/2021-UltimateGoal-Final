@@ -1,30 +1,20 @@
 package org.firstinspires.ftc.teamcode;
 
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.ColorSensor;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.teamcode.hardware.MecanumDrive;
 import org.firstinspires.ftc.teamcode.math.Point;
 
-@TeleOp(name = "SuperTeleOp", group = "Tele")
-public class SuperTeleOp extends OpMode {
+@TeleOp(name = "TeleOp Virgo 3", group = "Tele")
+public class TeleOpVirgo3 extends OpMode {
 
     private Gyro gyro = new Gyro();
 
-    private DcMotor flMotor = null;
-    private DcMotor frMotor = null;
-    private DcMotor blMotor = null;
-    private DcMotor brMotor = null;
-
     private DcMotor intake = null;
-    private DcMotor flyWheel = null;
+    private DcMotorEx flyWheel = null;
     private DcMotor feeder = null;
 
     private DcMotor wobbleArm = null;
@@ -50,12 +40,15 @@ public class SuperTeleOp extends OpMode {
     private boolean engageLock = false;
     private boolean swap = false;
     private boolean engageRing = false;
-    private boolean halfSpeed = false;
+    private boolean pastDUp = false;
+    private boolean pastDRight = false;
+    private boolean pastDDown = false;
+    private boolean pastDLeft = false;
+    private boolean past2X = false;
 
     private MecanumDrive drive;
-
-    //private boolean feederTimer = false;
-    //private
+    private Point direction;
+    private double power;
 
     @Override
     public void init() {
@@ -71,7 +64,7 @@ public class SuperTeleOp extends OpMode {
         telemetry.addData("rmb power", drive.getBackRightMotorPower());
 
         intake = hardwareMap.get(DcMotor.class, "intake");
-        flyWheel = hardwareMap.get(DcMotor.class, "out");
+        flyWheel = hardwareMap.get(DcMotorEx.class, "out");
         feeder = hardwareMap.get(DcMotor.class, "feed");
         wobbleArm = hardwareMap.get(DcMotor.class, "wobble" );
         wobbleLocker = hardwareMap.get(Servo.class, "locker");
@@ -92,34 +85,33 @@ public class SuperTeleOp extends OpMode {
         leftTrigger = gamepad2.left_trigger;
         rightTrigger = gamepad2.right_trigger;
 
-        drive.resetPowerValues();
-        cheat(gamepad1.left_stick_x, gamepad1.left_stick_y);
-        drive.radialMove(gamepad1.right_stick_x * multiplier * 0.75);
-        drive.updateMotorPowers();
-        telemetry.addData("lmf power", drive.getFrontLeftMotorPower());
-        telemetry.addData("rmf power", drive.getFrontRightMotorPower());
-        telemetry.addData("lmb power", drive.getBackLeftMotorPower());
-        telemetry.addData("rmb power", drive.getBackRightMotorPower());
-
+        //Check the multipliers for the motors
         //Reverse Toggle
         if(!pastX && gamepad1.x){
-            reverse = !reverse;
-            multiplier *= -1;
+            drive.toggleReverse();
         }
         pastX = gamepad1.x;
 
         //Halfspeed Toggle
         if(gamepad1.a == false && pastA == true){
-            halfSpeed = !halfSpeed;
-            if(halfSpeed == true){
-                multiplier *= 0.5;
-
-            }
-            else{
-                multiplier *= 2;
-            }
+            drive.toggleHalfSpeed();
         }
         pastA = gamepad1.a;
+        drive.calculateMultiplier();
+
+        //calculate and push the motor powers
+        drive.resetPowerValues();
+
+        direction = new Point(-1 * gamepad1.left_stick_x, gamepad1.left_stick_y);
+        power = Math.sqrt(gamepad1.left_stick_x * gamepad1.left_stick_x +
+                gamepad1.left_stick_y * gamepad1.left_stick_y);
+        drive.linearMove(direction, power);
+        drive.radialMove(gamepad1.right_stick_x);
+        drive.updateMotorPowers();
+        telemetry.addData("lmf power", drive.getFrontLeftMotorPower());
+        telemetry.addData("rmf power", drive.getFrontRightMotorPower());
+        telemetry.addData("lmb power", drive.getBackLeftMotorPower());
+        telemetry.addData("rmb power", drive.getBackRightMotorPower());
 
         if (gamepad2.y && !pastY) {
             if (intake.getPower() == 0) {
@@ -130,34 +122,49 @@ public class SuperTeleOp extends OpMode {
             }
         }
         pastY = gamepad2.y;
-        if(!pastY && gamepad1.x){
-            reverse = !reverse;
-            multiplier *= -1;
-        }
-        pastX = gamepad1.x;
-        if (gamepad2.a && !secondA) {
-            if (flyWheel.getPower() == 0) {
-                flyWheel.setPower(-1);
+
+        if (gamepad2.x && !past2X) {
+            if (intake.getPower() == 0) {
+                intake.setPower(-1);
             }
             else {
-                flyWheel.setPower(0);
+                intake.setPower(0);
+            }
+        }
+        past2X = gamepad2.x;
+
+        if (gamepad2.a && !secondA) {
+            if (flyWheel.getPower() == 0) {
+                flyWheel.setVelocity(-2200);
+            }
+            else {
+                flyWheel.setVelocity(0);
             }
         }
         secondA = gamepad2.a;
+
+        if (gamepad2.b && !secondB) {
+            if (flyWheel.getPower() == 0) {
+                flyWheel.setVelocity(-1900);
+            }
+            else {
+                flyWheel.setVelocity(0);
+            }
+        }
+        secondB = gamepad2.b;
+
         if (gamepad2.right_bumper && !pastRB) {
             if (feeder.getPower() == 0) {
                 feeder.setPower(-1);
-                //feederTimer = true;
-                //feederTimerInitial = runtime.Milliseconds();
-                flyWheel.setPower(-1);
             }
             else {
                 feeder.setPower(0);
             }
         }
         pastRB = gamepad2.right_bumper;
+
         if (gamepad2.left_trigger > 0) {
-            wobbleArm.setPower(gamepad2.left_trigger);
+            wobbleArm.setPower(gamepad2.left_trigger * .7);
         }
         else if (gamepad2.right_trigger > 0) {
             wobbleArm.setPower(-gamepad2.right_trigger);
@@ -166,7 +173,7 @@ public class SuperTeleOp extends OpMode {
             wobbleArm.setPower(0);
         }
 
-        if (gamepad2.left_bumper && pastLB) {
+        if (gamepad2.left_bumper && !pastLB) {
             if (wobbleLocker.getPosition() == 0) {
                 wobbleLocker.setPosition(.89);
             }
@@ -175,42 +182,42 @@ public class SuperTeleOp extends OpMode {
             }
         }
         pastLB = gamepad2.left_bumper;
-        if(gamepad2.back) {
-            flMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            frMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            blMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            brMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            flMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            frMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            blMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            brMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        }
 
-        /*telemetry.addData("Swap mode: ", swap);
-        telemetry.addData("Front Right Motor = ", frMotor.getCurrentPosition());
-        telemetry.addData("Front Left Motor = ", flMotor.getCurrentPosition());
-        telemetry.addData("Front Left Motor = ", brMotor.getCurrentPosition());
-        telemetry.addData("Front Left Motor = ", frMotor.getCurrentPosition());*/
-        telemetry.addData("Wobble Arm Encoder = ", wobbleArm.getCurrentPosition());
-        telemetry.addData("Reverse = ", reverse);
-        telemetry.addData("halfSpeed = ", halfSpeed);
+        if(gamepad1.dpad_up && !pastDUp) {
+            //drive.orient(0);
+        }
+        else if (gamepad1.dpad_right && !pastDRight) {
+            //drive.orient(1);
+        }
+        else if (gamepad1.dpad_down && !pastDDown) {
+            //drive.orient(2);
+        }
+        else if (gamepad1.dpad_left && !pastDLeft) {
+            //drive.orient(3);
+        }
+        pastDUp = gamepad1.dpad_up;
+        pastDRight = gamepad1.dpad_right;
+        pastDDown = gamepad1.dpad_down;
+        pastDLeft = gamepad1.dpad_left;
+
+        telemetry.addData("Swap mode", swap);
+        telemetry.addData("Front Right Motor Ticks", drive.getFrontRightMotorTicks());
+        telemetry.addData("Front Left Motor Ticks", drive.getFrontLeftMotorTicks());
+        telemetry.addData("Back Right Motor Ticks", drive.getBackRightMotorTicks());
+        telemetry.addData("Back Left Motor Ticks", drive.getBackLeftMotorTicks());
+        telemetry.addData("Wobble Arm Encoder", wobbleArm.getCurrentPosition());
+        telemetry.addData("Reverse", drive.isReverse());
+        telemetry.addData("halfSpeed", drive.isHalfSpeed());
+        telemetry.addData("Orientation", drive.getOrientation());
+        telemetry.addData("Velocity ", flyWheel.getVelocity());
         telemetry.update();
-    }
-
-    private void cheat(double x, double y) {
-        if (x == 0 && y == 0) {
-            return;
-        }
-        Point direction = new Point(x, y);
-        double power = Math.sqrt(x*x + y*y) * multiplier;
-        drive.linearMove(direction, power);
     }
 
     public void stop() {
         //Turn Off Motors
         drive.stop();
     }
-    public int quadrant() {
+    /*public int quadrant() {
         double angle = gyro.getAngle() + Values.finalAngle;
         if (angle < 90) {
             return 2;
@@ -224,5 +231,5 @@ public class SuperTeleOp extends OpMode {
         else {
             return 1;
         }
-    }
+    }*/
 }

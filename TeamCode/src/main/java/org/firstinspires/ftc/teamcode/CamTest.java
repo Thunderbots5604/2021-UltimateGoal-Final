@@ -19,15 +19,6 @@ public class CamTest extends OpMode {
     private DcMotor frMotor = null;
     private DcMotor blMotor = null;
     private DcMotor brMotor = null;
-    private DcMotor liftL = null;
-    private DcMotor liftR = null;
-
-    private Servo WobbleLocker;
-    private Servo WobbleArm;
-    private Servo RingArm;
-
-    private ColorSensor frontColor;
-    private ColorSensor backColor;
 
     private double powerFRBL = 0;
     private double powerFLBR = 0;
@@ -57,6 +48,8 @@ public class CamTest extends OpMode {
 
     @Override
     public void init() {
+        telemetry.addData("initializing", null);
+        telemetry.update();
 
         cam.initVuforia(hardwareMap);
 
@@ -65,28 +58,10 @@ public class CamTest extends OpMode {
         frMotor = hardwareMap.get(DcMotor.class, "rmf" );
         blMotor = hardwareMap.get(DcMotor.class, "lmb" );
         brMotor = hardwareMap.get(DcMotor.class, "rmb" );
-        liftL = hardwareMap.get(DcMotor.class, "LiftMechL");
-        liftR = hardwareMap.get(DcMotor.class, "LiftMechR");
-
-        WobbleLocker = hardwareMap.get(Servo.class, "WobbleLocker" );
-        RingArm = hardwareMap.get(Servo.class, "RingGrabber");
-        WobbleArm = hardwareMap.get(Servo.class, "WobbleArm");
-
-        frontColor = hardwareMap.get(ColorSensor.class, "fc");
-        backColor = hardwareMap.get(ColorSensor.class, "bc");
 
         //Reverse Motor Directions to Drive Straight
         flMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         blMotor.setDirection(DcMotorSimple.Direction.REVERSE);
-        liftL.setDirection(DcMotorSimple.Direction.REVERSE);
-
-        liftL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        liftR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
-        liftL.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        liftR.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
-
 
         //Set Gamepad Deadzone
         gamepad1.setJoystickDeadzone(0.05f);
@@ -96,7 +71,6 @@ public class CamTest extends OpMode {
     }
 
     public void start(){
-        RingArm.setPosition(0.6);
 
     }
 
@@ -160,21 +134,6 @@ public class CamTest extends OpMode {
         }
         pastX = gamepad1.x;
 
-        //Lift Mechanism Up and Down
-        if(leftTrigger > 0 && ((liftL.getCurrentPosition() < -2 || liftR.getCurrentPosition() < -2) || gamepad2.right_bumper)){
-            liftL.setPower(leftTrigger / 2);
-            liftR.setPower(leftTrigger / 2);
-
-        }
-        else if(rightTrigger > 0){
-            liftL.setPower(-rightTrigger / 2);
-            liftR.setPower(-rightTrigger / 2);
-        }
-        else {
-            liftL.setPower(0);
-            liftR.setPower(0);
-        }
-
         //Halfspeed Toggle
         if(gamepad1.a == false && pastA == true){
             halfSpeed = !halfSpeed;
@@ -188,59 +147,6 @@ public class CamTest extends OpMode {
         }
         pastA = gamepad1.a;
 
-
-        //Wobble Locker Toggle
-        if(gamepad2.x && !secondX){
-            engageLock = !engageLock;
-            if(engageLock){
-                WobbleLocker.setPosition(0.4);
-
-            }
-            else{
-                WobbleLocker.setPosition(0.5);
-            }
-        }
-        secondX = gamepad2.x;
-
-        //Wobble Arm Toggle
-        if(gamepad2.y && !pastY){
-            engageArm = !engageArm;
-            if(engageArm){
-                WobbleArm.setPosition(0.9);
-                WobbleLocker.setPosition(0.5);
-
-            }
-            else{
-                WobbleArm.setPosition(0);
-            }
-        }
-        pastY = gamepad2.y;
-
-        //Ring Grabbing Toggle
-        if(gamepad2.a && !secondA){
-            ring = !ring;
-            if(ring){
-                RingArm.setPosition(0.9);
-            }
-            else{
-                RingArm.setPosition(0.65);
-            }
-        }
-        secondA = gamepad2.a;
-
-        //Ring Arm all the way up
-        if(gamepad2.b && !secondB){
-            ring = !ring;
-            if(ring){
-                RingArm.setPosition(0.1);
-            }
-            else{
-                RingArm.setPosition(0.65);
-            }
-        }
-        secondB = gamepad2.b;
-
-
         if(gamepad2.back) {
             flMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
             frMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -250,16 +156,12 @@ public class CamTest extends OpMode {
             frMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             blMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             brMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            liftL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            liftR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            liftL.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            liftR.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         }
 
         telemetry.addData("Front Right Motor = ", frMotor.getCurrentPosition());
         telemetry.addData("Front Left Motor = ", flMotor.getCurrentPosition());
-        telemetry.addData("Front Left Motor = ", brMotor.getCurrentPosition());
-        telemetry.addData("Front Left Motor = ", frMotor.getCurrentPosition());
+        telemetry.addData("Back Right Motor = ", brMotor.getCurrentPosition());
+        telemetry.addData("Back Left Motor = ", blMotor.getCurrentPosition());
         telemetry.addData("x: ", coords[0]);
         telemetry.addData("y: ", coords[1]);
         telemetry.addData("Angle: ", coords[2]);
