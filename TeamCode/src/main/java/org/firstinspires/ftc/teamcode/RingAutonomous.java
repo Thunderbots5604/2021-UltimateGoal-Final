@@ -1,6 +1,3 @@
-/*This class is used to park the robot on the line. It should also serve
- * as a way of templating basic autonomous for testing*/
-
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -24,18 +21,12 @@ public class RingAutonomous extends LinearOpMode {
     private int halfOfField = Values.halfOfField;
     private int tileLength = Values.tileLength;
     private double power = Values.power;
-    private double[] coords = {20, -50, 0};
-
-    private DcMotor intake = null;
-    private DcMotor flyWheel = null;
-    private DcMotor feeder = null;
+    private double[] coords = {Values.X_START,Values.Y_START, 0};
+    private double[] zones = new double[3];
 
     @Override
     public void runOpMode() {
         MecanumDrive mecanumDrive = new MecanumDrive(hardwareMap);
-        intake = hardwareMap.get(DcMotor.class, "intake");
-        flyWheel = hardwareMap.get(DcMotor.class, "out");
-        feeder = hardwareMap.get(DcMotor.class, "feed");
 
         move.initialize(hardwareMap);
         motors.initMotors(hardwareMap);
@@ -43,24 +34,31 @@ public class RingAutonomous extends LinearOpMode {
         gyro.initGyro(hardwareMap);
         cam.startCam();
         int zone = cam.getZone();
+        if (zone == 0) {
+            zones = new double[] {-5, 55, 0};
+        }
+        else if (zone == 1) {
+            zones = new double[] {15, 35, 0};
+        }
+        else {
+            zones = new double[] {35, 55, 0};
+        }
         cam.endCam();
         waitForStart();
         motors.rotateCamPlatform(.9);
 
         //Shoot Rings
-        mecanumDrive.moveOnSimultaneous(coords, new double[] {30, -3, 0}, power, telemetry);
+        mecanumDrive.moveOnSimultaneous(coords, new double[] {-3, 30, 0}, power, telemetry);
         motors.shootPower(-2000);
         motors.getRing();
         motors.fireRing(1);
         move.move(0, power, "gyro turn");
         updateCoord();
-        mecanumDrive.moveOnSimultaneous(coords, new double[] {25, -3, 0}, power, telemetry);
+        mecanumDrive.moveOnSimultaneous(coords, new double[] {-3, 25, 0}, power, telemetry);
         sleep(1000);
         motors.fireRing(1);
-        motors.shootPower(-2100);
-        move.move(0, power, "gyro turn");
         updateCoord();
-        mecanumDrive.moveOnSimultaneous(coords, new double[] {20, -3, 0}, power, telemetry);
+        mecanumDrive.moveOnSimultaneous(coords, new double[] {-3, 20, 0}, power, telemetry);
         sleep(1000);
         motors.fireRing(1);
         motors.shootPower(0);
@@ -68,57 +66,28 @@ public class RingAutonomous extends LinearOpMode {
         //Drop Wobble
         move.move(0, power, "gyro turn");
         updateCoord();
-        if (zone == 0) {
-            mecanumDrive.moveOnSimultaneous(coords, new double[] {55, 0, 0}, power, telemetry);
-        }
-        else if (zone == 1) {
-            mecanumDrive.moveOnSimultaneous(coords, new double[] {35, 15, 0}, power, telemetry);
-        }
-        else {
-            mecanumDrive.moveOnSimultaneous(coords, new double[] {55, 30, 0}, power, telemetry);
-        }
+        mecanumDrive.moveOnSimultaneous(coords, zones, power, telemetry);
 
         motors.dropArm();
         sleep(1000);
         motors.resetArm();
         updateCoord();
-        mecanumDrive.moveOnSimultaneous(coords, new double[] {45, -3, 0}, power, telemetry);
+        mecanumDrive.moveOnSimultaneous(coords, new double[] {-3, 35, 0}, power, telemetry);
         move.move(0, power, "gyro turn");
 
-        //Pick up rings on field
-        if (zone != 0) {
-            motors.getRing();
-            updateCoord();
-            mecanumDrive.moveOnSimultaneous(coords, new double[] {40, -20}, power, telemetry);
-            sleep(500);
-            updateCoord();
-            mecanumDrive.moveOnSimultaneous(coords, new double[] {40, -25}, power, telemetry);
-            updateCoord();
-            mecanumDrive.moveOnSimultaneous(coords, new double[] {33, -3}, power, telemetry);
-            move.move(0, power, "gyro turn");
-            updateCoord();
-            mecanumDrive.moveOnSimultaneous(coords, new double[] {33, -3 , 0}, power, telemetry);
-
-            //Fire
-            motors.shootPower(-2200);
-            motors.fireRing(zone * 2 - 1);
-            motors.shootPower(0);
-            motors.ringLG();
-        }
-        else {
-            updateCoord();
-            mecanumDrive.moveOnSimultaneous(coords, new double[] {55, -50, 0}, power, telemetry);
-            updateCoord();
-            mecanumDrive.moveOnSimultaneous(coords, new double[] {35, -50, 0}, power, telemetry);
-            move.move(10, power, "turn left");
-
-            mecanumDrive.moveOnSimultaneous(coords, new double[] {55, 0, 0}, power, telemetry);
-        }
+        updateCoord();
+        mecanumDrive.moveOnSimultaneous(coords, new double[] {-50, 55, 0}, power, telemetry);
+        updateCoord();
+        mecanumDrive.moveOnSimultaneous(coords, new double[] {-50, 35, 0}, power, telemetry);
+        updateCoord();
+        mecanumDrive.moveOnSimultaneous(coords, zones, power, telemetry);
+        updateCoord();
+        mecanumDrive.moveOnSimultaneous(coords, new double[] {-20, 35, 0}, power, telemetry);
 
         //Park
         move.move(0, power, "gyro turn");
         updateCoord();
-        mecanumDrive.moveOnSimultaneous(coords, new double[] {50, 8, 0}, power, telemetry);
+        mecanumDrive.moveOnSimultaneous(coords, new double[] {8, 50, 0}, power, telemetry);
         Values.finalAngle = gyro.getAngle();
     }
 
