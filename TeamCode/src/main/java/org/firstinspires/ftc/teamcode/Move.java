@@ -55,7 +55,7 @@ public class Move extends LinearOpMode {
         this.telemetry = telemetry;
         this.opMode = opMode;
     }
-    Others motors = new Others(telemetry);
+    Others motors = new Others(telemetry, this);
 
     @Override
     public void runOpMode() {}
@@ -71,9 +71,6 @@ public class Move extends LinearOpMode {
         leftMotorBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rightMotorFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rightMotorBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-
-        rightMotorFront.setDirection(DcMotorSimple.Direction.REVERSE);
-        rightMotorBack.setDirection(DcMotorSimple.Direction.REVERSE);
 
         gyro.initGyro(hardwareMap);
         motors.initMotors(hardwareMap);
@@ -93,7 +90,7 @@ public class Move extends LinearOpMode {
                 turnLeft((int) (distance * TICKS_PER_DEGREE), power);
                 break;
             case "turn right":
-                turnRight((int) (distance * TICKS_PER_DEGREE), power);
+                turnRight((int) (distance * TICKS_PER_DEGREE * 1.6), power);
                 break;
             case "strafe left":
                 strafeLeft(distance, power);
@@ -167,7 +164,10 @@ public class Move extends LinearOpMode {
                     stopMotors();
                     return;
                 }
+                telemetry.addData(i + ": ", currentTicks[i]);
+                telemetry.addData(i + ":: ", targets[i]);
             }
+            telemetry.update();
         }
         stopMotors();
     }
@@ -192,9 +192,9 @@ public class Move extends LinearOpMode {
         ColorSensor backColor = map.get(ColorSensor.class, "bc");
         int reading;
         if (direction) {
-            setPowers(.3, .3, .3, .3);
+            setPowers(.35, .35, .35, .35);
         } else {
-            setPowers(-.3, -.3, -.3, -.3);
+            setPowers(-.35, -.35, -.35, -.35);
         }
         runtime.reset();
         while (runtime.milliseconds() < 5000 && opMode.opModeIsActive()) {

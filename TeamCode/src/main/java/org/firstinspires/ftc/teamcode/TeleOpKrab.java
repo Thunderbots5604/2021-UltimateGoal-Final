@@ -47,6 +47,9 @@ public class TeleOpKrab extends OpMode {
     private boolean past2X = false;
     private boolean allOff = false;
 
+    private int flyVel = 2200;
+
+
     private MecanumDrive drive;
     private Point direction;
     private double power;
@@ -103,7 +106,7 @@ public class TeleOpKrab extends OpMode {
         //calculate and push the motor powers
         drive.resetPowerValues();
 
-        direction = new Point(-1 * gamepad1.left_stick_x, gamepad1.left_stick_y);
+        direction = new Point(gamepad1.left_stick_x, gamepad1.left_stick_y);
         power = Math.sqrt(gamepad1.left_stick_x * gamepad1.left_stick_x +
                 gamepad1.left_stick_y * gamepad1.left_stick_y);
         drive.linearMove(direction, power);
@@ -137,7 +140,8 @@ public class TeleOpKrab extends OpMode {
         //Turn On Flywheel for high goal
         if (gamepad2.a && !secondA) {
             if (flyWheel.getPower() == 0) {
-                flyWheel.setVelocity(-2200);
+                flyVel = -2200;
+                flyWheel.setVelocity(flyVel);
             }
             else {
                 flyWheel.setVelocity(0);
@@ -148,7 +152,8 @@ public class TeleOpKrab extends OpMode {
         //Set Fly Wheel To Power Shots
         if (gamepad2.right_bumper && !pastRB) {
             if (flyWheel.getPower() == 0) {
-                flyWheel.setVelocity(-1900);
+                flyVel = -1900;
+                flyWheel.setVelocity(flyVel);
             }
             else {
                 flyWheel.setVelocity(0);
@@ -169,14 +174,13 @@ public class TeleOpKrab extends OpMode {
 
         //Move wobble arm
         if (gamepad2.left_trigger > 0) {
-            while(wobbleArm.getCurrentPosition() < 1300){
-                wobbleArm.setPower(gamepad2.left_trigger * .4);
-            }
+
+            wobbleArm.setPower(gamepad2.left_trigger * .4);
+
         }
         else if (gamepad2.right_trigger > 0) {
-            while(wobbleArm.getCurrentPosition() > 1000){
-                wobbleArm.setPower(-gamepad2.right_trigger * .4);
-            }
+            wobbleArm.setPower(-gamepad2.right_trigger * .4);
+
         }
         else {
             wobbleArm.setPower(0);
@@ -193,13 +197,19 @@ public class TeleOpKrab extends OpMode {
         //Lock Wobble
         if (gamepad2.left_bumper && !pastLB) {
             if (wobbleLocker.getPosition() == 0) {
-                wobbleLocker.setPosition(.89);
+                wobbleLocker.setPosition(0.5);
             }
             else {
                 wobbleLocker.setPosition(0);
             }
         }
         pastLB = gamepad2.left_bumper;
+
+        if (gamepad2.dpad_up){
+            flyVel = flyVel += 10;
+        } else if(gamepad2.dpad_down){
+            flyVel = flyVel-= 10;
+        }
 
 
         if(gamepad1.dpad_up && !pastDUp) {
@@ -219,11 +229,6 @@ public class TeleOpKrab extends OpMode {
         pastDDown = gamepad1.dpad_down;
         pastDLeft = gamepad1.dpad_left;
 
-        telemetry.addData("Swap mode", swap);
-        telemetry.addData("Front Right Motor Ticks", drive.getFrontRightMotorTicks());
-        telemetry.addData("Front Left Motor Ticks", drive.getFrontLeftMotorTicks());
-        telemetry.addData("Back Right Motor Ticks", drive.getBackRightMotorTicks());
-        telemetry.addData("Back Left Motor Ticks", drive.getBackLeftMotorTicks());
         telemetry.addData("Wobble Arm Encoder", wobbleArm.getCurrentPosition());
         telemetry.addData("Reverse", drive.isReverse());
         telemetry.addData("halfSpeed", drive.isHalfSpeed());
@@ -234,7 +239,7 @@ public class TeleOpKrab extends OpMode {
 
     public void stop() {
         //Turn Off Motors
-        drive.stop();
+        drive.stopMotors();
     }
     /*public int quadrant() {
         double angle = gyro.getAngle() + Values.finalAngle;

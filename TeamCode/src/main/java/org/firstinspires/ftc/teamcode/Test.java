@@ -16,7 +16,7 @@ public class Test extends LinearOpMode {
 
     Cam cam = new Cam(telemetry, hardwareMap);
     Move move = new Move(telemetry, this);
-    Others motors = new Others(telemetry);
+    Others motors = new Others(telemetry, this);
     Gyro gyro = new Gyro();
 
     int halfOfField = Values.halfOfField;
@@ -27,13 +27,15 @@ public class Test extends LinearOpMode {
 
     @Override
     public void runOpMode() {
-        MecanumDrive mecanumDrive = new MecanumDrive(hardwareMap);
+        MecanumDrive mecanumDrive = new MecanumDrive(hardwareMap, "lmf", "rmf", "lmb", "rmb", 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 / Values.TICKS_PER_ANGLE, 10, 10);
         motors.initMotors(hardwareMap);
         move.initialize(hardwareMap);
         cam.initVuforia(hardwareMap);
         gyro.initGyro(hardwareMap);
         waitForStart();
-        mecanumDrive.moveOnSimultaneous(position, new double[]{100, 0, 0}, power, telemetry);
+        motors.rotateCamPlatform(.33);
+        mecanumDrive.moveOnSimultaneous(position, new double[]{0, 1000, 0}, power, telemetry);
+        move.move(0, power, "gyro turn");
         while (opModeIsActive()) {
             cam.getCoords();
             coords = Values.currentCoords;

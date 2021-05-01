@@ -23,27 +23,29 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 
 public class Others extends LinearOpMode {
 
-    public Gyro gyro = new Gyro();
     public ElapsedTime time = new ElapsedTime();
 
     //Declare Motors and Servos
-    private DcMotor intake = null;
-    private DcMotorEx flyWheel = null;
-    private DcMotor feeder = null;
+
+    private DcMotor intake;
+    private DcMotorEx flyWheel;
+    private DcMotor feeder;
     private DcMotor wobbleArm;
 
-    private Servo wobbleLocker = null;
+    private Servo wobbleLocker;
     private Servo camPlatform;
 
     private ColorSensor backColor;
+    private LinearOpMode op;
 
     //Moving stuff between classes
     private Telemetry telemetry;
 
     private ElapsedTime runtime = new ElapsedTime();
 
-    public Others(Telemetry telemetry) {
+    public Others(Telemetry telemetry, LinearOpMode op) {
         this.telemetry = telemetry;
+        this.op = op;
     }
 
 
@@ -60,39 +62,38 @@ public class Others extends LinearOpMode {
 
         backColor = hardwareMap.get(ColorSensor.class, "bc");
 
-        wobbleLocker.setPosition(.89);
-        //.8 for camplatform is looking left ish
-        camPlatform.setPosition(1);
+        wobbleLocker.setPosition(0);
     }
     public void dropArm() {
         reset();
-        while (wobbleArm.getCurrentPosition() < 1300) {
+        while (wobbleArm.getCurrentPosition() < 1300 && op.opModeIsActive()) {
             wobbleArm.setPower(.5);
         }
         wobbleArm.setPower(0);
-        wobbleLocker.setPosition(0);
+        wobbleLocker.setPosition(.5);
     }
     public void resetArm() {
         reset();
-        while (wobbleArm.getCurrentPosition() > -1000) {
+        while (wobbleArm.getCurrentPosition() > -500 && op.opModeIsActive()) {
+            wobbleArm.setPower(-.5);
+        }
+        wobbleLocker.setPosition(0);
+        while (wobbleArm.getCurrentPosition() > -1000 && op.opModeIsActive()) {
             wobbleArm.setPower(-.5);
         }
         wobbleArm.setPower(0);
     }
     public void fireRing(int rings) {
-        while (rings > 0) {
-            time.reset();
-            feeder.setPower(0);
-            while (getShootSpeed() > -2200 && time.milliseconds() < 3000) {
-                telemetry.addData("Speed: ", getShootSpeed());
-                telemetry.update();
-            }
-            sleep(500);
+        feeder.setPower(0);
+        while (rings > 0 && op.opModeIsActive()) {
+
+            sleep(1000);
             feeder.setPower(-1);
-            while (getShootSpeed() < -2000 && time.milliseconds() < 3000) {}
+
+            sleep(330);
+            feeder.setPower(0);
             rings--;
         }
-        sleep(500);
         feeder.setPower(0);
     }
     public void getRing(){
@@ -132,7 +133,7 @@ public class Others extends LinearOpMode {
     }
     public void rotateCamPlatform(double angle) {
         camPlatform.setPosition(angle);
-        if (camPlatform.getPosition() == 0) {
+        if (camPlatform.getPosition() == .3) {
             Cam.rotated = false;
         }
         else {

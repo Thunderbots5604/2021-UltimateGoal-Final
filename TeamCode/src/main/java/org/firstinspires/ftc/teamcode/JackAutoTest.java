@@ -17,7 +17,7 @@ public class JackAutoTest extends LinearOpMode {
     public void runOpMode() {
         MecanumDrive mecanumDrive = new MecanumDrive(hardwareMap);
         waitForStart();
-        mecanumDrive.moveOnSimultaneous(new double[]{0, 0, 0}, new double[]{100, 100, 90}, 0.35, telemetry);
-        sleep(1000);
+        mecanumDrive.moveOnSimultaneous(new double[]{0, 0, 0}, new double[]{0, 0, 90}, 0.4, telemetry);
+        sleep(10000);
     }
 }

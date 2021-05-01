@@ -12,7 +12,7 @@ public class ShootAndWobble extends LinearOpMode {
     Gyro gyro = new Gyro();
     Cam cam = new Cam(telemetry, hardwareMap);
     Move move = new Move(telemetry, this);
-    Others motors = new Others(telemetry);
+    Others motors = new Others(telemetry, this);
 
     int halfOfField = Values.halfOfField;
     int tileLength = Values.tileLength;

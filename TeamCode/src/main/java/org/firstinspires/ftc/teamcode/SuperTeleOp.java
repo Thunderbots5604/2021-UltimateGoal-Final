@@ -208,7 +208,7 @@ public class SuperTeleOp extends OpMode {
 
     public void stop() {
         //Turn Off Motors
-        drive.stop();
+        drive.stopMotors();
     }
     public int quadrant() {
         double angle = gyro.getAngle() + Values.finalAngle;

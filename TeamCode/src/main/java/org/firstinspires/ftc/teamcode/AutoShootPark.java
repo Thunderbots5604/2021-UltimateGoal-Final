@@ -15,7 +15,7 @@ public class AutoShootPark extends LinearOpMode {
 
     Cam cam = new Cam(telemetry, hardwareMap);
     Move move = new Move(telemetry, this);
-    Others motors = new Others(telemetry);
+    Others motors = new Others(telemetry, this);
     Gyro gyro = new Gyro();
 
 

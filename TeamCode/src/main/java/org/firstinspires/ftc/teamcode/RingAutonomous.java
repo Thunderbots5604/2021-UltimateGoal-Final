@@ -15,7 +15,7 @@ public class RingAutonomous extends LinearOpMode {
 
     private Cam cam = new Cam(telemetry, hardwareMap);
     private Move move = new Move(telemetry, this);
-    private Others motors = new Others(telemetry);
+    private Others motors = new Others(telemetry, this);
     private Gyro gyro = new Gyro();
 
     private int halfOfField = Values.halfOfField;
@@ -26,77 +26,102 @@ public class RingAutonomous extends LinearOpMode {
 
     @Override
     public void runOpMode() {
-        MecanumDrive mecanumDrive = new MecanumDrive(hardwareMap);
+        MecanumDrive mecanumDrive = new MecanumDrive(hardwareMap, "lmf", "rmf", "lmb", "rmb", 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 / Values.TICKS_PER_ANGLE, 5, 10);
 
         move.initialize(hardwareMap);
-        motors.initMotors(hardwareMap);
         cam.initVuforia(hardwareMap);
         gyro.initGyro(hardwareMap);
         cam.startCam();
         int zone = cam.getZone();
         if (zone == 0) {
-            zones = new double[] {-5, 55, 0};
+            zones = new double[] {2000, -600, 0};
         }
         else if (zone == 1) {
-            zones = new double[] {15, 35, 0};
+            zones = new double[] {1100, 300, 0};
         }
         else {
-            zones = new double[] {35, 55, 0};
+            zones = new double[] {2000, 1150, 0};
         }
+        telemetry.addData("Zone: ", zone);
+        telemetry.update();
         cam.endCam();
+        motors.initMotors(hardwareMap);
         waitForStart();
-        motors.rotateCamPlatform(.9);
+        motors.rotateCamPlatform(.33);
 
         //Shoot Rings
-        mecanumDrive.moveOnSimultaneous(coords, new double[] {-3, 30, 0}, power, telemetry);
-        motors.shootPower(-2000);
+        mecanumDrive.moveOnSimultaneous(coords, new double[] {1100, -250, 0}, power * .8, telemetry);
+        motors.shootPower(-2060);
         motors.getRing();
-        motors.fireRing(1);
-        move.move(0, power, "gyro turn");
-        updateCoord();
-        mecanumDrive.moveOnSimultaneous(coords, new double[] {-3, 25, 0}, power, telemetry);
         sleep(1000);
+        move.move(355, power, "gyro turn");
         motors.fireRing(1);
+        move.move(5, power, "turn left");
         updateCoord();
-        mecanumDrive.moveOnSimultaneous(coords, new double[] {-3, 20, 0}, power, telemetry);
+        mecanumDrive.moveOnSimultaneous(coords, new double[] {800, -250, 0}, power, telemetry);
         sleep(1000);
+        move.move(355, power, "gyro turn");
+        motors.fireRing(1);
+        move.move(5, power, "turn left");
+        updateCoord();
+        mecanumDrive.moveOnSimultaneous(coords, new double[] {550, -250, 0}, power, telemetry);
+        sleep(1000);
+        move.move(355, power, "gyro turn");
         motors.fireRing(1);
         motors.shootPower(0);
+        motors.ringLG();
 
         //Drop Wobble
         move.move(0, power, "gyro turn");
         updateCoord();
         mecanumDrive.moveOnSimultaneous(coords, zones, power, telemetry);
-
-        motors.dropArm();
+        sleep(100);
+        move.move(0, power, "gyro turn");
         sleep(1000);
-        motors.resetArm();
-        updateCoord();
-        mecanumDrive.moveOnSimultaneous(coords, new double[] {-3, 35, 0}, power, telemetry);
         move.move(0, power, "gyro turn");
 
+        motors.dropArm();
+        mecanumDrive.moveOnSimultaneous(coords, new double[]{zones[0], zones[1], 0}, power, telemetry);
+        motors.resetArm();
+
+        //Go to Second Wobble
         updateCoord();
-        mecanumDrive.moveOnSimultaneous(coords, new double[] {-50, 55, 0}, power, telemetry);
+        mecanumDrive.moveOnSimultaneous(coords, new double[] {2200, -700, 0}, power, telemetry);
+        sleep(500);
+        move.move(0, power, "gyro turn");
+        mecanumDrive.moveOnSimultaneous(coords, new double[] {2200, -1800, 0}, power, telemetry);
+        sleep(200);
+        move.move(0, power, "gyro turn");
         updateCoord();
-        mecanumDrive.moveOnSimultaneous(coords, new double[] {-50, 35, 0}, power, telemetry);
-        updateCoord();
-        mecanumDrive.moveOnSimultaneous(coords, zones, power, telemetry);
-        updateCoord();
-        mecanumDrive.moveOnSimultaneous(coords, new double[] {-20, 35, 0}, power, telemetry);
+        mecanumDrive.moveOnSimultaneous(coords, new double[] {1900, -1800, 0}, power, telemetry);
+        sleep(100);
+        mecanumDrive.moveOnSimultaneous(coords, new double[] {1950, -500, 0}, power, telemetry);
+        sleep(100);
+        mecanumDrive.moveOnSimultaneous(coords, new double[] {zones[0], zones[1] - 100, 0}, power, telemetry);
+        sleep(100);
 
         //Park
         move.move(0, power, "gyro turn");
-        updateCoord();
-        mecanumDrive.moveOnSimultaneous(coords, new double[] {8, 50, 0}, power, telemetry);
+        if (zone == 0) {
+            move.move(300, power, "backward");
+            move.move(1000, power, "strafe right");
+            move.parkToWhite(hardwareMap, true);
+        }
+        else {
+            move.parkToWhite(hardwareMap, false);
+        }
         Values.finalAngle = gyro.getAngle();
     }
 
     public void updateCoord() {
-        if (cam.getCoords()) {
+        /*if (cam.getCoords()) {
             coords = Values.currentCoords;
         }
-        else {
-            coords[2] = gyro.getAngle();
+        else {*/
+        coords[2] = gyro.getAngle();
+        //}
+        if (coords[2] > 180) {
+            coords[2] -= 360;
         }
     }
 }

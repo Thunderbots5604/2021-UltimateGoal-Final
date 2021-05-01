@@ -34,6 +34,9 @@ The autonomous portions are handled by robot since they use a lot of different s
 package org.firstinspires.ftc.teamcode.hardware;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.util.ElapsedTime;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -45,9 +48,10 @@ import org.firstinspires.ftc.teamcode.pathing.RobotPosition;
 
 import org.firstinspires.ftc.teamcode.Values;
 
-public class MecanumDrive {
+public class MecanumDrive extends LinearOpMode{
     //fields
     //most important field - the hardware map
+    private ElapsedTime running = new ElapsedTime();
     private HardwareMap map;
     //wheels - assumes DcMotorEx
     private DcMotorEx frontLeftMotor;
@@ -96,6 +100,8 @@ public class MecanumDrive {
     private final double ANGLE_RANGE;
     private final double LINEAR_RANGE;
 
+    @Override
+    public void runOpMode(){}
 
     //build a robot based on a hardware map and names of the motors
     public MecanumDrive(HardwareMap map, String frontLeftDrive, String frontRightDrive,
@@ -148,14 +154,14 @@ public class MecanumDrive {
                         String backLeftDrive, String backRightDrive, double flPowerMultiplier,
                         double frPowerMultiplier, double blPowerMultiplier, double brPowerMultiplier) {
         this(map, frontLeftDrive, frontRightDrive, backLeftDrive, backRightDrive, flPowerMultiplier,
-                frPowerMultiplier, blPowerMultiplier, brPowerMultiplier, 1, 1, 1, 1, 1, 1, 1 / (double) Values.ticksPerDegree, 1, 1);
+                frPowerMultiplier, blPowerMultiplier, brPowerMultiplier, 1, 1, 1, 1, 1, 1, 1, 1, 1);
     }
 
     //constructor used when the finals are set to a default of 1
     public MecanumDrive(HardwareMap map, String frontLeftDrive, String frontRightDrive,
                         String backLeftDrive, String backRightDrive) {
         this(map, frontLeftDrive, frontRightDrive, backLeftDrive,
-                backRightDrive, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 / (double) Values.ticksPerDegree, 10, 10);
+                backRightDrive, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 10, 10);
     }
 
     //include some default strings for lovable dummies that aren't gonna want to type
@@ -218,10 +224,10 @@ public class MecanumDrive {
         //finish scaling the vector
         scaledDirection.scale(power);
         //set the powers - y - x for front left and back right, y + x for front right and back left
-        frontLeftMotorPower += ((scaledDirection.getY() - scaledDirection.getX()) / maxValue);
-        backRightMotorPower += ((scaledDirection.getY() - scaledDirection.getX()) / maxValue);
-        frontRightMotorPower += ((scaledDirection.getY() + scaledDirection.getX()) / maxValue);
-        backLeftMotorPower += ((scaledDirection.getY() + scaledDirection.getX()) / maxValue);
+        frontLeftMotorPower += ((scaledDirection.getY() + scaledDirection.getX()) / maxValue);
+        backRightMotorPower += ((scaledDirection.getY() + scaledDirection.getX()) / maxValue);
+        frontRightMotorPower += ((scaledDirection.getY() - scaledDirection.getX()) / maxValue);
+        backLeftMotorPower += ((scaledDirection.getY() - scaledDirection.getX()) / maxValue);
     }
 
     //radial motion used for turning only takes power as a variable since it's designed for point turns
@@ -263,7 +269,7 @@ public class MecanumDrive {
     }
 
     //stop method used for emergency stop - sets all motor powers to zero
-    public void stop() {
+    public void stopMotors() {
         frontLeftMotor.setPower(0);
         frontRightMotor.setPower(0);
         backLeftMotor.setPower(0);
@@ -277,6 +283,7 @@ public class MecanumDrive {
     //new move on simultaneous programmed from the ground up
     public double[] moveOnSimultaneous(double[] startPosition, double[] targetPosition, double power, Telemetry tele) {
         //figure out initial angle
+        running.reset();
         double angle = Math.toRadians(startPosition[2]);
         //get differences in x, y, and angle
         double differenceInX = targetPosition[0] - startPosition[0];
@@ -288,16 +295,40 @@ public class MecanumDrive {
         double robotXMoved;
         double robotYMoved;
         double angleMoved;
+        Point linearMovement = Point.origin();
+        double adjustedPower = power;
         updateEncoderValues();
         //check if the positions are close enough to equal
-        while (!(MathUtilities.within(LINEAR_RANGE, startPosition[0], targetPosition[0])
+        running.reset();
+        while ((!(MathUtilities.within(LINEAR_RANGE, startPosition[0], targetPosition[0])
                 && MathUtilities.within(LINEAR_RANGE, startPosition[1], targetPosition[1])
-                && MathUtilities.within(ANGLE_RANGE, startPosition[2], targetPosition[2]))) {
+                && MathUtilities.within(ANGLE_RANGE, startPosition[2], targetPosition[2])))
+                && running.milliseconds() < 3000) {
             //movement piece
             resetPowerValues();
-            linearMove(new Point(xMotion, yMotion), power);
-            radialMove(Math.copySign(power, differenceInAngle));
+            adjustedPower = power;
+            linearMovement = Point.origin();
+            if(!MathUtilities.within(LINEAR_RANGE, startPosition[0], targetPosition[0])) {
+                linearMovement = linearMovement.plus(new Point(xMotion, 0));
+            }
+            if(!MathUtilities.within(LINEAR_RANGE, startPosition[1], targetPosition[1])) {
+                linearMovement = linearMovement.plus(new Point(0, yMotion));
+            }
+            /*if(linearMovement.distance() < 100) {
+                if(linearMovement.distance() < 70) {
+                    adjustedPower *= 0.7;
+                }
+                else {
+                    adjustedPower *= linearMovement.distance() / 100;
+                }
+            }*/
+            linearMove(linearMovement, adjustedPower);
+
+            if (!MathUtilities.within(ANGLE_RANGE, startPosition[2], targetPosition[2])) {
+                radialMove(-Math.copySign(power, differenceInAngle));
+            }
             updateMotorPowers();
+            running.reset();
             //update the robot positions
             updateEncoderValues();
             robotXMoved = calculateChangeInX();
@@ -325,14 +356,18 @@ public class MecanumDrive {
             tele.addData("frPower", this.getFrontRightMotorPower());
             tele.addData("blPower", this.getBackLeftMotorPower());
             tele.addData("brPower", this.getBackRightMotorPower());
+            tele.addData("front left ticks: ", this.getFrontLeftMotorTicks());
+            tele.addData("back left ticks: ", this.getBackLeftMotorTicks());
+            tele.addData("front right ticks: ", this.getFrontRightMotorTicks());
+            tele.addData("back right ticks: ", this.getBackRightMotorTicks());
             tele.update();
         }
-        this.stop();
+        this.stopMotors();
         //return the estimated current position
         return startPosition;
     }
     //update all the values for the changes and previous values
-    private void updateEncoderValues() {
+    public void updateEncoderValues() {
         changeInFL = (this.getFrontLeftMotorTicks() - previousEncoderFL) * FRONT_LEFT_TICK_MULTIPLIER;
         changeInFR = (this.getFrontRightMotorTicks() - previousEncoderFR) * FRONT_RIGHT_TICK_MULTIPLIER;
         changeInBL = (this.getBackLeftMotorTicks() - previousEncoderBL) * BACK_LEFT_TICK_MULTIPLIER;
@@ -344,21 +379,21 @@ public class MecanumDrive {
     }
 
     //calculate the change in x position relative to robot
-    private double calculateChangeInX() {
+    public double calculateChangeInX() {
         //+, -, -, +
-        return -1 * X_DISTANCE_PER_TICK * (changeInFL - changeInFR - changeInBL + changeInBR) / 4;
+        return X_DISTANCE_PER_TICK * (changeInFL - changeInFR - changeInBL + changeInBR) / 4;
     }
 
     //calculate the change in y position relative to robot
-    private double calculateChangeInY() {
+    public double calculateChangeInY() {
         //all motors go in the same direction for this
         return Y_DISTANCE_PER_TICK * (changeInFL + changeInFR + changeInBL + changeInBR) / 4;
     }
 
     //calculate the change in angle relative to robot
-    private double calculateChangeInAngle() {
+    public double calculateChangeInAngle() {
         //+, -, +, -
-        return ANGLE_PER_TICK * (changeInFL - changeInFR + changeInBL - changeInBR) / 4;
+        return -ANGLE_PER_TICK * (changeInFL - changeInFR + changeInBL - changeInBR) / 4;
     }
 
     //setters for only the booleans because using setters for other values will break things

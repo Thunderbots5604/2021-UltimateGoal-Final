@@ -38,6 +38,8 @@ import static org.firstinspires.ftc.robotcore.external.navigation.AxesReference.
 @Autonomous(name = "Cam", group = "TensorFlow")
 @Disabled
 public class Cam extends LinearOpMode {
+    private ElapsedTime reset = new ElapsedTime();
+
     private static final String TFOD_MODEL_ASSET = "UltimateGoal.tflite";
     private static final String LABEL_FIRST_ELEMENT = "Quad";
     private static final String LABEL_SECOND_ELEMENT = "Single";
@@ -208,14 +210,18 @@ public class Cam extends LinearOpMode {
                 angle = gyro.getAngle();
             }
             else {
-                angle = rotation.thirdAngle + 5;
+                angle = rotation.thirdAngle - 85;
                 if (angle < 0) {
                     angle += 360;
                 }
             }
-            Values.currentCoords[0] = x;
-            Values.currentCoords[1] = y;
+            Values.currentCoords[1] = x * Values.TICKS_PER_X;
+            Values.currentCoords[0] = y * Values.TICKS_PER_Y;
             Values.currentCoords[2] = angle;
+            if (reset.seconds() > 2) {
+                reset.reset();
+                targetsUltimateGoal.deactivate();
+            }
         }
         else {
             Values.currentCoords[2] = gyro.getAngle();
@@ -241,5 +247,8 @@ public class Cam extends LinearOpMode {
     }
     public void endCam() {
         tfod.shutdown();
+    }
+    public double camAngle() {
+        return gyro.getAngle();
     }
 }
